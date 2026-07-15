@@ -1,0 +1,13 @@
+# env files — never commit
+.env*.local
+.env
+
+# build output
+.next/
+out/
+
+# dependencies
+node_modules/
+
+# OS
+.DS_Store
