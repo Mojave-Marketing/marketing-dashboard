@@ -70,8 +70,8 @@ export default function Page() {
     <div className="page">
       <div className="header">
         <div>
-          {/* TODO: Replace .wordmark with actual Mojave logo SVG — see globals.css comment */}
-          <div className="wordmark">Mojave</div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.jpg" alt="Mojave" className="logo" />
           <h1>Marketing Dashboard</h1>
           <p>
             {view === "trends"

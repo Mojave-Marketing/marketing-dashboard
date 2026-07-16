@@ -39,20 +39,17 @@ html, body {
   padding: 40px 24px 80px;
 }
 
-/* ─── Logo / wordmark ────────────────────────────────────────────────────── */
-/* TODO: Replace this text element with the real Mojave logo SVG once
-   exported from the brand kit PDF. Swap the <div class="wordmark">
-   for an <img src="/logo.svg" alt="Mojave" class="logo" /> (or inline
-   SVG) and remove the .wordmark rule below. */
-.wordmark {
-  display: inline-block;
-  font-family: var(--font-headers);
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.22em;
-  color: var(--accent);
-  text-transform: uppercase;
-  margin-bottom: 6px;
+/* ─── Logo ───────────────────────────────────────────────────────────────── */
+.logo {
+  display: block;
+  height: 40px;
+  width: auto;
+  margin-bottom: 4px;
+}
+
+.login-logo {
+  height: 72px;
+  margin: 0 auto 20px;
 }
 
 /* ─── Header ─────────────────────────────────────────────────────────────── */

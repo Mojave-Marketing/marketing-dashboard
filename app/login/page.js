@@ -33,8 +33,8 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-card">
-        {/* TODO: Replace with Mojave logo SVG — see globals.css comment */}
-        <div className="wordmark" style={{ marginBottom: 14 }}>Mojave</div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo.jpg" alt="Mojave" className="logo login-logo" />
         <h1 className="login-title">Marketing Dashboard</h1>
         <p className="login-subtitle">Enter the shared password to continue.</p>
         <form onSubmit={handleSubmit}>
