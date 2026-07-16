@@ -1,49 +1,77 @@
+/* ─── Mojave Brand Tokens ─────────────────────────────────────────────────── */
 :root {
-  --bg: #f7f8fa;
-  --card-bg: #ffffff;
-  --border: #e5e7eb;
-  --text-primary: #111827;
-  --text-secondary: #6b7280;
-  --accent: #4f46e5;
-  --good: #059669;
-  --bad: #dc2626;
-  --neutral: #9ca3af;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
+  /* Colors */
+  --accent:         #7C499F;  /* Royal Purple — primary brand, headers, CTAs   */
+  --text-primary:   #4B4760;  /* Dark Slate — body text                        */
+  --text-secondary: #7B7490;  /* Lighter Dark Slate                            */
+  --lavender:       #DACAE2;  /* Light Lavender — subtle fills / dividers      */
+  --sage:           #CADE92;  /* Sage Green — positive/growth accent (~10%)    */
+  --good:           #4D6B15;  /* Dark Sage — above-benchmark pill text         */
+  --bad:            #9B5E45;  /* Warm tone — below-benchmark pill text         */
+  --neutral:        #9B93AA;  /* Muted neutral                                 */
+  --bg:             #F8F6F2;  /* Off-white / cream page background             */
+  --card-bg:        #ffffff;
+  --border:         rgba(124, 73, 159, 0.18); /* 1px purple-tinted border      */
+  --shadow:         0 1px 3px rgba(124, 73, 159, 0.07);
+
+  /* Typography fallbacks (Husser Bold → Segoe UI Bold, Telegraf → Inter/system) */
+  --font-headers: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-body:    "Inter", "Aptos", system-ui, -apple-system,
+                  BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+                  sans-serif;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 html, body {
   padding: 0;
   margin: 0;
   background: var(--bg);
   color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
 }
 
+/* ─── Page shell ──────────────────────────────────────────────────────────── */
 .page {
   max-width: 1180px;
   margin: 0 auto;
   padding: 40px 24px 80px;
 }
 
+/* ─── Logo / wordmark ────────────────────────────────────────────────────── */
+/* TODO: Replace this text element with the real Mojave logo SVG once
+   exported from the brand kit PDF. Swap the <div class="wordmark">
+   for an <img src="/logo.svg" alt="Mojave" class="logo" /> (or inline
+   SVG) and remove the .wordmark rule below. */
+.wordmark {
+  display: inline-block;
+  font-family: var(--font-headers);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+/* ─── Header ─────────────────────────────────────────────────────────────── */
 .header {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-bottom: 32px;
+  margin-bottom: 36px;
   flex-wrap: wrap;
   gap: 16px;
 }
 
 .header h1 {
+  font-family: var(--font-headers);
   font-size: 26px;
-  font-weight: 650;
+  font-weight: 700;
   margin: 0 0 4px;
   letter-spacing: -0.02em;
+  color: var(--text-primary);
 }
 
 .header p {
@@ -52,118 +80,6 @@ html, body {
   font-size: 14px;
 }
 
-select {
-  font-size: 14px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--card-bg);
-  color: var(--text-primary);
-  min-width: 260px;
-}
-
-.kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 14px;
-  margin-bottom: 32px;
-}
-
-.card {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 18px 20px;
-  box-shadow: var(--shadow);
-}
-
-.kpi-label {
-  font-size: 12px;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-bottom: 8px;
-}
-
-.kpi-value {
-  font-size: 26px;
-  font-weight: 650;
-  letter-spacing: -0.02em;
-  margin-bottom: 6px;
-}
-
-.pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 999px;
-}
-
-.pill.good { background: #ecfdf5; color: var(--good); }
-.pill.bad { background: #fef2f2; color: var(--bad); }
-.pill.neutral { background: #f3f4f6; color: var(--neutral); }
-
-.charts-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
-  gap: 20px;
-  margin-bottom: 32px;
-}
-
-.chart-card h3 {
-  font-size: 15px;
-  font-weight: 600;
-  margin: 0 0 16px;
-}
-
-.section-title {
-  font-size: 18px;
-  font-weight: 650;
-  margin: 40px 0 16px;
-  letter-spacing: -0.01em;
-}
-
-.takeaways-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 16px;
-}
-
-.takeaway-card {
-  border-left: 3px solid var(--accent);
-}
-
-.takeaway-card h4 {
-  font-size: 14px;
-  font-weight: 650;
-  margin: 0 0 8px;
-}
-
-.takeaway-card p {
-  font-size: 13.5px;
-  line-height: 1.55;
-  color: #374151;
-  margin: 0;
-}
-
-.footer-note {
-  margin-top: 40px;
-  font-size: 12px;
-  color: var(--text-secondary);
-  border-top: 1px solid var(--border);
-  padding-top: 16px;
-}
-
-.state-message {
-  padding: 60px 20px;
-  text-align: center;
-  color: var(--text-secondary);
-}
-
-/* Tab navigation */
 .header-controls {
   display: flex;
   flex-direction: column;
@@ -171,10 +87,27 @@ select {
   gap: 10px;
 }
 
+/* ─── Form controls ──────────────────────────────────────────────────────── */
+select {
+  font-size: 14px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  min-width: 260px;
+}
+
+select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* ─── Tabs ───────────────────────────────────────────────────────────────── */
 .tabs {
   display: flex;
   gap: 2px;
-  background: var(--border);
+  background: rgba(124, 73, 159, 0.1);
   border-radius: 10px;
   padding: 3px;
 }
@@ -193,44 +126,133 @@ select {
 
 .tab-btn.active {
   background: var(--card-bg);
-  color: var(--text-primary);
+  color: var(--accent);
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(124, 73, 159, 0.12);
+}
+
+/* ─── Cards ──────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px 24px;
   box-shadow: var(--shadow);
 }
 
-/* Sends table (trends view) */
-.sends-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
+/* ─── KPI grid ───────────────────────────────────────────────────────────── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin-bottom: 32px;
 }
 
-.sends-table th {
-  text-align: left;
-  color: var(--text-secondary);
-  font-weight: 600;
+.kpi-label {
   font-size: 11px;
+  color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  border-bottom: 1px solid var(--border);
-  padding: 10px 14px;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  margin-bottom: 8px;
 }
 
-.sends-table td {
-  padding: 10px 14px;
-  border-bottom: 1px solid #f1f2f4;
+.kpi-value {
+  font-family: var(--font-headers);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin-bottom: 6px;
 }
 
-.sends-table tr:last-child td {
-  border-bottom: none;
+/* ─── Benchmark pills ────────────────────────────────────────────────────── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.01em;
 }
 
-.sends-table-title {
-  max-width: 260px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.pill.good    { background: #EDF5D0; color: var(--good); }
+.pill.bad     { background: #F7EEE9; color: var(--bad); }
+.pill.neutral { background: #F0ECF6; color: var(--neutral); }
+
+/* ─── Chart grid ─────────────────────────────────────────────────────────── */
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
 }
 
+.chart-card h3 {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  margin: 0 0 16px;
+}
+
+/* ─── Section title ──────────────────────────────────────────────────────── */
+.section-title {
+  font-family: var(--font-headers);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  margin: 40px 0 16px;
+}
+
+/* ─── Takeaways ──────────────────────────────────────────────────────────── */
+.takeaways-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.takeaway-card {
+  border-left: 3px solid var(--accent);
+}
+
+.takeaway-card h4 {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  margin: 0 0 8px;
+}
+
+.takeaway-card p {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* ─── Footer ─────────────────────────────────────────────────────────────── */
+.footer-note {
+  margin-top: 40px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+/* ─── State messages ─────────────────────────────────────────────────────── */
+.state-message {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+/* ─── Links table ────────────────────────────────────────────────────────── */
 .links-table {
   width: 100%;
   border-collapse: collapse;
@@ -240,16 +262,50 @@ select {
 .links-table th {
   text-align: left;
   color: var(--text-secondary);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
   border-bottom: 1px solid var(--border);
   padding: 8px 6px;
 }
 
 .links-table td {
   padding: 8px 6px;
-  border-bottom: 1px solid #f1f2f4;
+  border-bottom: 1px solid rgba(124, 73, 159, 0.08);
   word-break: break-all;
+  color: var(--text-primary);
+}
+
+/* ─── Sends table (Trends view) ──────────────────────────────────────────── */
+.sends-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.sends-table th {
+  text-align: left;
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--border);
+  padding: 10px 14px;
+}
+
+.sends-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(124, 73, 159, 0.08);
+  color: var(--text-primary);
+}
+
+.sends-table tr:last-child td { border-bottom: none; }
+
+.sends-table-title {
+  max-width: 260px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

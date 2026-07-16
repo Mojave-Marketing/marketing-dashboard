@@ -185,7 +185,7 @@ export default function TrendsView() {
           dataKey="clickRate"
           rollingKey="rollingClick"
           benchmarkPct={benchClickPct}
-          color="#10b981"
+          color="#5A8020"
           title="Click rate over time"
         />
       </div>

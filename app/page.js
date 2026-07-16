@@ -70,7 +70,9 @@ export default function Page() {
     <div className="page">
       <div className="header">
         <div>
-          <h1>Rep Training Email Performance</h1>
+          {/* TODO: Replace .wordmark with actual Mojave logo SVG — see globals.css comment */}
+          <div className="wordmark">Mojave</div>
+          <h1>Marketing Dashboard</h1>
           <p>
             {view === "trends"
               ? "Open rate, click rate, and rolling baseline across all sends"
