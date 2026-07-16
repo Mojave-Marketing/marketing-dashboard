@@ -104,6 +104,41 @@ lib/
   mailchimp.js          # server-side Mailchimp API client
 ```
 
+## Authentication
+
+The dashboard is protected by a single shared password enforced in
+Next.js middleware — not client-side JS (which would ship the password
+in the browser bundle).
+
+**How it works:**
+- `middleware.js` intercepts every request, reads an `httpOnly` cookie,
+  and verifies a time-stamped HMAC-SHA256 session token before allowing
+  access. No valid token → redirect to `/login`.
+- The login API route (`/api/login`) compares the submitted password to
+  `DASHBOARD_PASSWORD` server-side, then sets the signed cookie on success.
+- The cookie cannot be forged (requires `SESSION_SECRET`) and expires
+  after 7 days.
+- Both the dashboard UI *and* the `/api/campaigns/*` data routes are
+  protected — the API endpoints are not reachable without a valid session.
+
+**Environment variables required:**
+
+| Variable | Purpose |
+|---|---|
+| `DASHBOARD_PASSWORD` | The shared password shown on the login page |
+| `SESSION_SECRET` | Signs the session cookie — keep this secret and separate from the password |
+
+Generate `SESSION_SECRET` with:
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+```
+
+**Security scope:** This is single-shared-password protection suitable
+for an internal leadership dashboard. It is not designed for per-user
+access control, audit logging, or anything requiring individual
+accountability. If you need those, replace this with a proper auth
+provider (Clerk, Auth0, etc.).
+
 ## A note on dependencies
 
 `next` is pinned to `^14.2.35` (patches known Dec 2025 RSC vulnerabilities).

@@ -82,6 +82,15 @@ export default function Page() {
           </p>
         </div>
         <div className="header-controls">
+          <button
+            className="logout-btn"
+            onClick={async () => {
+              await fetch("/api/logout", { method: "POST" });
+              window.location.href = "/login";
+            }}
+          >
+            Log out
+          </button>
           <div className="tabs">
             <button
               className={`tab-btn${view === "campaign" ? " active" : ""}`}

@@ -9,7 +9,7 @@
   --good:           #4D6B15;  /* Dark Sage — above-benchmark pill text         */
   --bad:            #9B5E45;  /* Warm tone — below-benchmark pill text         */
   --neutral:        #9B93AA;  /* Muted neutral                                 */
-  --bg:             #F8F6F2;  /* Off-white / cream page background             */
+  --bg:             #ffffff;  /* White page background                         */
   --card-bg:        #ffffff;
   --border:         rgba(124, 73, 159, 0.18); /* 1px purple-tinted border      */
   --shadow:         0 1px 3px rgba(124, 73, 159, 0.07);
@@ -309,3 +309,103 @@ select:focus {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ─── Logout button ──────────────────────────────────────────────────────── */
+.logout-btn {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: transparent;
+  transition: color 0.1s, text-decoration-color 0.1s;
+  align-self: flex-end;
+}
+
+.logout-btn:hover {
+  color: var(--accent);
+  text-decoration-color: var(--accent);
+}
+
+/* ─── Login page ─────────────────────────────────────────────────────────── */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  padding: 24px;
+}
+
+.login-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 48px 40px 40px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 4px 24px rgba(124, 73, 159, 0.08);
+  text-align: center;
+}
+
+.login-title {
+  font-family: var(--font-headers);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  margin: 0 0 8px;
+}
+
+.login-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0 0 28px;
+}
+
+.login-input {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  background: var(--card-bg);
+  outline: none;
+  margin-bottom: 12px;
+  transition: border-color 0.1s;
+}
+
+.login-input:focus {
+  border-color: var(--accent);
+}
+
+.login-error {
+  font-size: 13px;
+  color: var(--bad);
+  margin: 0 0 12px;
+}
+
+.login-btn {
+  display: block;
+  width: 100%;
+  padding: 11px 20px;
+  background: var(--accent);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: opacity 0.1s;
+}
+
+.login-btn:hover:not(:disabled) { opacity: 0.88; }
+.login-btn:disabled { opacity: 0.55; cursor: not-allowed; }
