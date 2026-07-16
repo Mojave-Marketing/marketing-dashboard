@@ -1,4 +1,4 @@
-# Rep Training Mailchimp Dashboard
+# Marketing Reporting Dashboard
 
 A Next.js dashboard that pulls rep-training campaign performance directly from
 the Mailchimp Marketing API (no CSV exports) and renders KPI cards, a send
