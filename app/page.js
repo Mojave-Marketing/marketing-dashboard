@@ -69,10 +69,11 @@ export default function Page() {
   return (
     <div className="page">
       <div className="header">
-        <div>
+        <div className="header-brand">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.jpg" alt="Mojave" className="logo" />
-          <h1>Marketing Dashboard</h1>
+          <div>
+          <h1>Mojave | Marketing Dashboard</h1>
           <p>
             {view === "trends"
               ? "Open rate, click rate, and rolling baseline across all sends"
@@ -80,6 +81,7 @@ export default function Page() {
               ? `Sent ${new Date(detail.sendTime).toLocaleDateString()} — ${detail.title}`
               : " "}
           </p>
+          </div>
         </div>
         <div className="header-controls">
           <button
