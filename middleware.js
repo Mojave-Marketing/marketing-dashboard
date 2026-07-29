@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { verifyToken } from "./lib/session";
 
-// Paths that are always public — no session cookie required.
 const PUBLIC_PREFIXES = ["/login", "/api/login"];
 
 export async function middleware(request) {
@@ -22,6 +21,5 @@ export async function middleware(request) {
 }
 
 export const config = {
-  // Run on every route except Next.js internals and static files.
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

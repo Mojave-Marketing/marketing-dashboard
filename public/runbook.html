@@ -1,0 +1,2660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mojave Marketing Operations Runbook</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --purple:        #7C499F;
+    --purple-dark:   #5A3472;
+    --purple-light:  #9B6BB8;
+    --slate:         #4B4760;
+    --slate-light:   #6B6880;
+    --lavender:      #DACAE2;
+    --lavender-light:#EEE6F3;
+    --lavender-pale: #F7F3FA;
+    --sage:          #CADE92;
+    --sage-dark:     #A8BC6A;
+    --white:         #FFFFFF;
+    --off-white:     #F9F7FB;
+    --border:        #E2D5EC;
+    --border-strong: #C9B8D9;
+    --text-primary:  #2D2440;
+    --text-secondary:#4B4760;
+    --text-muted:    #8A7FA0;
+
+    --tag-todo-bg:      #FDF3E7;
+    --tag-todo-text:    #9A5C00;
+    --tag-todo-border:  #F0A830;
+    --tag-pending-bg:   #EDF4FB;
+    --tag-pending-text: #1A5C8A;
+    --tag-pending-border:#5BA3C9;
+    --tag-done-bg:      #EDF7F1;
+    --tag-done-text:    #1A6B3C;
+    --tag-done-border:  #4CAF82;
+    --tag-loom-bg:      #F3EEF8;
+    --tag-loom-text:    #5A3472;
+    --tag-loom-border:  #9B6BB8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--off-white);
+    color: var(--text-primary);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    height: 58px;
+    box-shadow: 0 1px 4px rgba(75,71,96,0.06);
+  }
+
+  .logo-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  /* SVG logo mark — two book pages shape */
+  .logo-mark {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--purple);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .header-divider {
+    width: 1px;
+    height: 22px;
+    background: var(--border);
+  }
+
+  .header-subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+
+  .header-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .last-updated {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    background: var(--lavender-pale);
+    border: 1px solid var(--border);
+    padding: 3px 9px;
+    border-radius: 20px;
+  }
+
+  /* ── TABS ── */
+  .tab-bar {
+    background: var(--white);
+    border-bottom: 2px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    position: sticky;
+    top: 58px;
+    z-index: 99;
+    box-shadow: 0 2px 8px rgba(75,71,96,0.06);
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+
+  .tab {
+    padding: 13px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    white-space: nowrap;
+    transition: color 0.15s, border-color 0.15s;
+    user-select: none;
+  }
+
+  .tab:hover { color: var(--purple); }
+
+  .tab.active {
+    color: var(--purple);
+    border-bottom-color: var(--purple);
+    font-weight: 600;
+  }
+
+  /* ── LAYOUT ── */
+  .content {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 36px 32px;
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── PAGE HEADER ── */
+  .page-header {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .page-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--purple-light);
+    margin-bottom: 6px;
+  }
+
+  .page-header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+
+  .page-header p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    max-width: 580px;
+  }
+
+  /* ── SECTION ── */
+  .section {
+    margin-bottom: 36px;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--purple);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .section h2 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin-bottom: 10px;
+    transition: box-shadow 0.15s;
+  }
+
+  .card:hover {
+    box-shadow: 0 2px 10px rgba(124,73,159,0.07);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .card h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .card p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.65;
+  }
+
+  .card-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    margin-top: 10px;
+  }
+
+  /* ── TAGS ── */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .tag::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+  }
+
+  .tag-todo     { background: var(--tag-todo-bg);    color: var(--tag-todo-text);    border: 1px solid var(--tag-todo-border); }
+  .tag-pending  { background: var(--tag-pending-bg); color: var(--tag-pending-text); border: 1px solid var(--tag-pending-border); }
+  .tag-done     { background: var(--tag-done-bg);    color: var(--tag-done-text);    border: 1px solid var(--tag-done-border); }
+  .tag-loom     { background: var(--tag-loom-bg);    color: var(--tag-loom-text);    border: 1px solid var(--tag-loom-border); }
+
+  /* ── GRID ── */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  @media (max-width: 700px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  /* ── PEOPLE CARDS ── */
+  .people-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 10px;
+  }
+
+  .person-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    border-top: 3px solid var(--purple);
+  }
+
+  .person-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 3px;
+  }
+
+  .person-role {
+    font-size: 11px;
+    color: var(--purple);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+  }
+
+  .person-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.55;
+  }
+
+  /* ── TOOL ROWS ── */
+  .tool-row {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: box-shadow 0.15s;
+  }
+
+  .tool-row:hover { box-shadow: 0 2px 8px rgba(124,73,159,0.07); }
+
+  .tool-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--lavender-pale);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .tool-info { flex: 1; }
+  .tool-name  { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+  .tool-desc  { font-size: 12px; color: var(--text-muted); }
+  .tool-tags  { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  /* ── LINKS ── */
+  a { color: var(--purple); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ── PLACEHOLDER ── */
+  .placeholder {
+    background: var(--lavender-pale);
+    border: 1px dashed var(--border-strong);
+    border-radius: 10px;
+    padding: 18px 22px;
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 10px;
+    font-style: italic;
+  }
+
+  /* ── LOOM PLACEHOLDER ── */
+  .loom-placeholder {
+    background: var(--lavender-pale);
+    border: 1px dashed var(--purple-light);
+    border-radius: 10px;
+    padding: 16px 20px;
+    color: var(--purple-dark);
+    font-size: 13px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .loom-icon { font-size: 18px; flex-shrink: 0; }
+
+  /* ── DIVIDER ── */
+  hr.divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 28px 0;
+  }
+
+  /* ── NOTICE ── */
+  .notice {
+    background: var(--lavender-pale);
+    border-left: 3px solid var(--purple);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .notice strong { color: var(--purple); }
+
+  /* ── SAGE ACCENT BAND ── */
+  .sage-band {
+    background: #F5F9EC;
+    border: 1px solid #CADE92;
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: #4A5E1A;
+    margin-bottom: 10px;
+  }
+
+  /* ── TOOL CARDS (expandable) ── */
+  .tool-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: box-shadow 0.15s;
+    overflow: hidden;
+  }
+
+  .tool-card:hover {
+    box-shadow: 0 2px 10px rgba(124,73,159,0.08);
+    border-color: var(--border-strong);
+  }
+
+  .tool-card-main {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 14px 18px;
+  }
+
+  .tool-link {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: 1;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .tool-link:hover .tool-name {
+    color: var(--purple);
+    text-decoration: underline;
+  }
+
+  .tool-link:hover { text-decoration: none; }
+
+  .tool-card-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    margin-left: 12px;
+  }
+
+  .tool-chevron {
+    font-size: 18px;
+    color: var(--text-muted);
+    transition: transform 0.2s;
+    line-height: 1;
+    display: inline-block;
+    width: 20px;
+    text-align: center;
+  }
+
+  .tool-chevron.open {
+    transform: rotate(90deg);
+  }
+
+  .tool-expand {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease;
+  }
+
+  .tool-expand.open {
+    max-height: 400px;
+  }
+
+  .tool-expand-inner {
+    padding: 0 18px 18px 68px;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+  }
+
+  .tool-expand-inner p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.65;
+    margin-bottom: 12px;
+  }
+
+  .tool-expand-meta {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 0;
+  }
+
+  .tag-personal {
+    background: #EDF4FB;
+    color: #1A5C8A;
+    border: 1px solid #5BA3C9;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .tag-shared {
+    background: #F3EEF8;
+    color: #5A3472;
+    border: 1px solid #9B6BB8;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .tag-shared::before, .tag-personal::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+  }
+
+  .tab.tab-locked {
+    color: var(--border-strong);
+    cursor: not-allowed;
+    opacity: 0.6;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .tab.tab-locked:hover {
+    color: var(--border-strong);
+  }
+
+  .tab-soon {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: var(--lavender);
+    color: var(--purple-dark);
+    border: 1px solid var(--border-strong);
+    padding: 2px 6px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="logo-area">
+    <!-- Mojave M logo mark (two book pages) drawn in SVG -->
+    <svg class="logo-mark" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5 26V8C5 8 10 6 14 10V27C14 27 10 24 5 26Z" fill="#7C499F"/>
+      <path d="M27 26V8C27 8 22 6 18 10V27C18 27 22 24 27 26Z" fill="#9B6BB8"/>
+    </svg>
+    <span class="logo-text">Mojave</span>
+  </div>
+  <div class="header-divider"></div>
+  <span class="header-subtitle">Marketing Operations Runbook</span>
+  <div class="header-right">
+    <span class="last-updated">Updated June 2025</span>
+  </div>
+</header>
+
+<!-- TAB BAR -->
+<nav class="tab-bar">
+  <div class="tab active" onclick="switchTab('overview', this)">Overview</div>
+  <div class="tab" onclick="switchTab('linkedin', this)">LinkedIn</div>
+  <div class="tab" onclick="switchTab('crm-maps', this)">CRM & MAPS</div>
+  <div class="tab" onclick="switchTab('rep-firms', this)">Rep Firms</div>
+  <div class="tab" onclick="switchTab('website', this)">Website</div>
+  <div class="tab" onclick="switchTab('tools', this)">Tools</div>
+  <div class="tab" onclick="switchTab('reporting', this)">Reporting & Integrations</div>
+  <div class="tab" onclick="switchTab('dataflow', this)">Data Flow</div>
+  <div class="tab" onclick="switchTab('ideas', this)">Ideas & Unfinished Projects</div>
+</nav>
+
+<div class="content">
+
+<!-- ══ OVERVIEW ══ -->
+<div id="overview" class="tab-panel active">
+  <div class="page-header">
+    <div class="page-eyebrow">Marketing Operations Runbook</div>
+    <h1>Welcome</h1>
+    <p>This is the living document for how marketing works at Mojave. Start here, use the tabs to go deep on any area. It grows as we do.</p>
+  </div>
+
+  <div class="notice" style="flex-direction: column; align-items: flex-start; gap: 12px;">
+    <strong style="font-size:13px;">How to use this runbook</strong>
+    <p style="font-size:13px; color:var(--text-secondary); margin:0;">Each tab covers a distinct area of marketing operations. Within tabs, cards can be expanded for detail. Use the tags below as a quick status signal across all content.</p>
+    <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+      <span><span class="tag tag-todo">Todo</span> <span style="font-size:12px; color:var(--text-secondary);">Needs attention or action</span></span>
+      <span><span class="tag tag-pending">Pending</span> <span style="font-size:12px; color:var(--text-secondary);">In progress or awaiting handoff</span></span>
+      <span><span class="tag tag-loom">Loom</span> <span style="font-size:12px; color:var(--text-secondary);">Walkthrough video coming</span></span>
+      <span><span class="tag tag-done">Done</span> <span style="font-size:12px; color:var(--text-secondary);">Complete</span></span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Philosophy</div>
+    <div class="card">
+      <p>Marketing and sales operations at Mojave are inseparable. How a contact enters the system shapes every touchpoint downstream — from nurture emails to rep firm assignments to Power BI reporting. This runbook reflects that reality.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Marketing Team</div>
+    <div class="people-grid">
+      <div class="person-card">
+        <div class="person-name">Juanita Ossa</div>
+        <div class="person-role">Marketing Coordinator · Contractor</div>
+        <div class="person-desc">Author of this runbook. Owns CRM gatekeeping, LinkedIn, website updates, rep firm onboarding, and marketing operations.</div>
+      </div>
+      <div class="person-card">
+        <div class="person-name">Heather Humphrey</div>
+        <div class="person-role">Email, Creative & Copy · Contractor</div>
+        <div class="person-desc">Visual assets, marketing emails, and Mailchimp execution. Receives approved contacts for import.</div>
+      </div>
+      <div class="person-card">
+        <div class="person-name">Christy Kemp</div>
+        <div class="person-role">PR & Copy · Contractor</div>
+        <div class="person-desc">Copywriting and PR. Reviews LinkedIn posts, writes rep firm announcement copy and press releases.</div>
+      </div>
+      <div class="person-card">
+        <div class="person-name">Chris Anton</div>
+        <div class="person-role">Web Development · Contractor</div>
+        <div class="person-desc">Implements all structural and development changes to mojavehvac.com.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Key Internal Stakeholders</div>
+    <div class="people-grid">
+      <div class="person-card">
+        <div class="person-name">Mateo Cardona</div>
+        <div class="person-role">Director of Rep Sales — US & LATAM</div>
+        <div class="person-desc">Primary collaborator on CRM, Power BI reporting, rep firm operations, and the selector tool lead automation project.</div>
+      </div>
+      <div class="person-card">
+        <div class="person-name">Justin Sixt</div>
+        <div class="person-role">Director of Operations</div>
+        <div class="person-desc">Collaborator on training operations. Currently working to automate training registration, calendar invites, and quizzes to reduce manual load.</div>
+      </div>
+      <div class="person-card">
+        <div class="person-name">Gregg Tatro</div>
+        <div class="person-role">VP of Sales</div>
+        <div class="person-desc">Senior sales leadership.</div>
+      </div>
+      <div class="person-card">
+        <div class="person-name">Aaron Meele</div>
+        <div class="person-role">VP of Product</div>
+        <div class="person-desc">Senior product leadership.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Quick Links</div>
+    <div style="display:flex; flex-wrap:wrap; gap:10px;">
+      <a href="https://outlook.office.com/host/377c982d-9686-450e-9a7c-22aeaf1bc162/7211f19f-262a-42eb-a02e-289956491741" target="_blank" style="display:inline-flex; align-items:center; gap:6px; background:var(--purple); color:white; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">☁️ Marketing Drive</a>
+      <a href="https://crm.zoho.com" target="_blank" style="display:inline-flex; align-items:center; gap:6px; background:var(--purple); color:white; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">📊 Zoho CRM</a>
+      <a href="https://login.mailchimp.com" target="_blank" style="display:inline-flex; align-items:center; gap:6px; background:var(--purple); color:white; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">📧 Mailchimp</a>
+      <a href="https://mojavehvac.com/wp-admin" target="_blank" style="display:inline-flex; align-items:center; gap:6px; background:var(--purple); color:white; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">🌐 WP Admin</a>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LINKEDIN ══ -->
+<div id="linkedin" class="tab-panel">
+  <div class="page-header">
+    <div class="page-eyebrow">Channel</div>
+    <h1>LinkedIn</h1>
+    <p>Process, content pillars, performance context, hashtag library, and ideas in the pipeline. We've grown from ~1,500 to 4,700+ followers.</p>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Cadence & Process</div>
+    <div class="card">
+      <div class="card-header"><h3>Regular Posts</h3></div>
+      <p>Target is 2–3 posts per week. The flow is: draft content → sync with Christy to gut-check messaging and tone → pair with a Canva visual (templates created by either the marketing coordinator or Heather) → publish. Christy is not a gatekeeper for every word — she's a second set of eyes to make sure the post makes sense and lands well.</p>
+      <div class="tool-expand-meta" style="margin-top: 10px;">
+        <span>Cadence: 2–3x/week</span>
+        <span>Visual: Canva template per post</span>
+        <span>Review: Christy before publishing</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>New Rep Firm Announcements</h3></div>
+      <p>Every new rep firm gets a LinkedIn announcement post. Copy is written by Christy — this is one of the few post types where she owns the draft, not just the review. Marketing coordinator schedules and publishes once all information is confirmed and an agreed day/time is set. See Rep Firms tab for the full announcement process.</p>
+      <div class="tool-expand-meta" style="margin-top: 10px;">
+        <span>Copy: Christy</span>
+        <span>Scheduling & publishing: Marketing Coordinator</span>
+        <span>Timing: Agreed upon with stakeholders in advance</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>Press Releases</h3></div>
+      <p>Christy writes the copy for press releases. The marketing coordinator helps post and distribute them — typically scheduling as soon as all information is in hand, based on the agreed publish day and time.</p>
+      <div class="tool-expand-meta" style="margin-top: 10px;">
+        <span>Copy: Christy</span>
+        <span>Posting & scheduling: Marketing Coordinator</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>Mentions & Monitoring</h3>
+        <span class="tag tag-pending">Opportunity</span>
+      </div>
+      <p>The LinkedIn page is monitored regularly for mentions worth reposting — partner posts, rep firm activity, industry references to Mojave. Currently reactive. The ideal state is to be more active: replying to comments, engaging with others' content, and building a presence beyond just publishing. This is an area worth investing more time in as capacity allows.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Recent Context</h3>
+        <span class="tag tag-pending">Transitioning</span>
+      </div>
+      <p>During a period of reduced availability, the approach shifted to reusing high-performing content rather than creating net new. This was intentional — good content resurfaces well on LinkedIn. As capacity returns, the goal is to move back to original content at full cadence.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Content Pillars</div>
+
+    <div class="card">
+      <div class="card-header"><h3>💡 Thought Leadership</h3></div>
+      <p>Industry trends, energy efficiency, HVAC innovation, IAQ, and sustainability. This is where Mojave earns credibility with engineers, facility managers, and building owners. From sales, there's a push to develop more content around <strong>basis of design</strong> — link to be shared. This pillar is the core of the LinkedIn strategy.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>🔧 Product</h3></div>
+      <p>ArctiDry product content — technical differentiators, ISMRE, dew point control, liquid desiccant, and how the system works. Demo units and installs belong here. Pull from the "Units in the Wild" Teams channel (RSMs and Justin, Director of Operations post field images) for authentic product-in-use content.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>🏗️ Basis of Design</h3>
+        <span class="tag tag-todo">New — build out</span>
+      </div>
+      <p>Engineering-specific content targeting specifiers, MEP consultants, and engineers. Technical depth on how and why ArctiDry is designed the way it is — ASHRAE compliance, ISMRE standards, dew point math, spec-level detail. A distinct audience and voice from applications content. Direction from sales. Link to basis of design resource to be shared.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>🏥 Applications</h3>
+      </div>
+      <p>Vertical-specific, outcome-focused content for facility managers, building owners, and decision makers. Healthcare, grocery, education, hospitality. "Here's what ArctiDry does in your type of building." Lunch & Learn events and install posts fit naturally here.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>📅 Events</h3></div>
+      <p>Trade shows, Lunch & Learns, factory tours, and partner announcements. Rep firm welcome posts have performed well here. The "Units in the Wild" Teams channel (RSMs and Justin, Director of Operations post images) is a content source for install and field shots that can feed this pillar.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>🙌 Tried & Retired (for now)</h3>
+      </div>
+      <p>Employee spotlights and holiday posts have been tested. Neither has been a consistent priority. Worth revisiting if bandwidth allows, but not a focus pillar right now.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Content Formula</div>
+    <div class="card">
+      <div class="card-header"><h3>Hook / Value / Story / CTA</h3></div>
+      <p>150–300 words per post. Open with a hook that stops the scroll, deliver the value clearly, add context or story, close with a CTA. Every post should include a Canva visual with alt-text. Posts without visuals underperform.</p>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>Canva Assets & Templates</h3></div>
+      <p>All LinkedIn graphics, templates, and visual assets live in a shared Canva folder. Pull from here for post visuals and use the existing templates to keep everything on-brand.</p>
+      <div style="margin-top:12px;">
+        <a href="https://www.canva.com/folder/FAFYvOvf2Yc" target="_blank" style="display:inline-flex; align-items:center; gap:6px; background:var(--purple); color:white; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">🎨 Canva Assets Folder</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Performance Tracking</div>
+    <div class="card">
+      <div class="card-header">
+        <h3>LinkedIn & GA Analytics Tracker</h3>
+      </div>
+      <p>LinkedIn and Google Analytics performance is tracked manually in a shared Excel spreadsheet — updated at the end of each month by the marketing coordinator. Not the ideal long-term solution, but it has been the working record. Follower growth from ~1,500 to 4,700+ is documented here alongside post-level engagement data. Worth reviewing before building any new reporting process around it.</p>
+      <div style="margin-top:12px;"><a href="https://mojavehvac.sharepoint.com/:x:/r/sites/mojavemarketing/_layouts/15/Doc.aspx?sourcedoc=%7B3F98D169-DCC4-4C5D-ACD5-2E05567540E5%7D&file=LinkedIn_Analytics_Tracker.xlsx&action=default&mobileredirect=true&DefaultItemOpen=1" target="_blank" style="display:inline-flex; align-items:center; gap:6px; background:var(--purple); color:white; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">📊 LinkedIn & GA Analytics Tracker</a></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Hashtag Library</div>
+
+    <div class="card">
+      <div class="card-header"><h3>Thought Leadership</h3></div>
+      <p style="font-family: 'DM Mono', monospace; font-size: 12px; line-height: 2; color: var(--purple);">#BuildingScience &nbsp; #DOAS &nbsp; #ISMRE &nbsp; #ASHRAE &nbsp; #HVACengineering &nbsp; #ClimateTech &nbsp; #Decarbonization &nbsp; #BuildingDecarbonization &nbsp; #CommercialBuildings &nbsp; #IndoorAirQuality &nbsp; #EnergyEfficiency</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>Product & Applications</h3></div>
+      <p style="font-family: 'DM Mono', monospace; font-size: 12px; line-height: 2; color: var(--purple);">#LiquidDesiccant &nbsp; #ArctiDry &nbsp; #DehumidificationTech &nbsp; #OutdoorAirSystem &nbsp; #HumidityControl &nbsp; #DewPoint &nbsp; #HVACinnovation &nbsp; #HVAC &nbsp; #commercialairconditioning</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>Events & Field</h3></div>
+      <p style="font-family: 'DM Mono', monospace; font-size: 12px; line-height: 2; color: var(--purple);">#HVACcommunity &nbsp; #ManufacturersRep &nbsp; #LunchAndLearn &nbsp; #CommercialHVAC &nbsp; #HVACinstall &nbsp; #FieldWork &nbsp; #climatetech</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>Vertical — Rotate by Post</h3></div>
+      <p style="font-family: 'DM Mono', monospace; font-size: 12px; line-height: 2; color: var(--purple);">#HealthcareHVAC &nbsp; #FacilityManagement &nbsp; #GroceryRetail &nbsp; #SchoolIAQ &nbsp; #HospitalityHVAC &nbsp; #IndoorAgriculture</p>
+    </div>
+
+    <div class="sage-band">⚠️ Retire <strong>#ArctiDry2024</strong> — replace with <strong>#ArctiDry</strong> going forward. <strong>#DOAS</strong> is underused given how engineers search for this category — prioritize it in product and thought leadership posts.</div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Ideas & AI Projects</div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>🤖 AI Agent 1 — Industry News Sourcing</h3>
+        <span class="tag tag-todo">Personal Project</span>
+      </div>
+      <p>An AI agent that sources industry-related news and trending topics relevant to Mojave — HVAC, energy efficiency, building science, climate tech. Would surface timely content angles so thought leadership posts can tap into what people are already talking about.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>🤖 AI Agent 2 — Influencer & Competitor Monitoring</h3>
+        <span class="tag tag-todo">Personal Project</span>
+      </div>
+      <p>An AI agent that monitors and surfaces content from relevant influencers, competitors, and partners on LinkedIn. Would identify posts worth engaging with, resharing, or responding to — turning passive scrolling into an active engagement strategy.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>📸 Units in the Wild</h3>
+        <span class="tag tag-pending">Active channel</span>
+      </div>
+      <p>A Microsoft Teams channel ("Units and Sales in the Wild") where RSMs (Regional Sales Managers) and Justin (Director of Operations) post photos from installs and field visits. This is a content goldmine for product and event posts — real installs, real locations, authentic imagery. Pull from here regularly for "in the field" content.</p>
+      <div style="margin-top:12px;">
+        <a href="https://teams.microsoft.com/l/channel/19%3A8f829fdbb3704758b6b0167244de1df1%40thread.tacv2/Units%20and%20Sales%20in%20the%20Wild?groupId=a59c4ea7-71f3-4466-b970-b54f74f97503&tenantId=3106699f-63c0-4091-9eae-2b7b85661b86" target="_blank" style="display:inline-flex; align-items:center; gap:6px; background:var(--purple); color:white; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">💬 Units and Sales in the Wild</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>📊 Reporting Upgrade</h3>
+        <span class="tag tag-todo">Todo</span>
+      </div>
+      <p>The current Excel-based performance tracking is functional but not scalable. A more structured reporting setup — possibly integrated with the existing Power BI stack — would make it easier to spot trends and report on LinkedIn growth consistently.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CRM & MAPS ══ -->
+<div id="crm-maps" class="tab-panel">
+  <div class="page-header">
+    <div class="page-eyebrow">Systems</div>
+    <h1>CRM & MAPS</h1>
+    <p>How contacts move from source to Zoho to Mailchimp — and everything in between. The marketing coordinator is the gatekeeper; nothing reaches Mailchimp without clearing this process first.</p>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Zoho CRM</div>
+    <div class="card">
+      <div class="card-header">
+        <h3>Data Hygiene Standards</h3>
+        <span class="tag tag-todo">Todo</span>
+      </div>
+      <p>Required fields, naming conventions, source tagging, and duplicate handling rules. Document the non-negotiables before any contact is added.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Account Custom Fields</h3>
+        <span class="tag tag-pending">In place, not implemented</span>
+      </div>
+      <p>Most account-level custom fields were created by the marketing coordinator. They exist but are not consistently populated — they need cleanup and sales team enablement to become useful. Field reference:</p>
+      <table style="width:100%; font-size:13px; border-collapse:collapse; margin-top:10px;">
+        <thead>
+          <tr style="background:var(--lavender-pale);">
+            <th style="text-align:left; padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-primary); font-weight:600;">Field</th>
+            <th style="text-align:left; padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-primary); font-weight:600;">Purpose & Options</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary); white-space:nowrap;"><strong>Account Type</strong></td><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">End User, Engineer, Investor, National Account, Other, Rep Firm, Supplier, Customer, Contractor/Installer. Drives marketing campaign triggers.</td></tr>
+          <tr><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary); white-space:nowrap;"><strong>Parent Account</strong></td><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">Links child accounts (individual rep firm offices) to the parent firm.</td></tr>
+          <tr><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary); white-space:nowrap;"><strong>Territory</strong></td><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">States a rep firm covers (parent and child accounts).</td></tr>
+          <tr><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary); white-space:nowrap;"><strong>Target Industry</strong></td><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">What a rep firm primarily sells: Dehumidification or Comfort. Helps target marketing.</td></tr>
+          <tr><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary); white-space:nowrap;"><strong>Industry</strong></td><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">The industries the account's own customers operate in.</td></tr>
+          <tr><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary); white-space:nowrap;"><strong>Account Status</strong></td><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">Active, Inactive, Probation, Terminated. Relevant only when Type = Rep Firm.</td></tr>
+          <tr><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary); white-space:nowrap;"><strong>Sales Volume Target</strong></td><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">For rep firms. Sales is meant to set this during onboarding.</td></tr>
+          <tr><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary); white-space:nowrap;"><strong>Units Sold</strong></td><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">Intended as a calculated field aggregating units sold for the account.</td></tr>
+          <tr><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary); white-space:nowrap;"><strong>Termination Date / Reason</strong></td><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">For reporting and context when a rep firm relationship ends.</td></tr>
+        </tbody>
+      </table>
+      <div class="sage-band" style="margin-top:12px;margin-bottom:0;">⚠️ Overall assessment: fields are in place but not implemented. Needs dedicated cleanup time and sales team enablement to drive consistent usage. Note: Zoho has real automation limitations — calculated fields and triggers often require specific coding that isn't easily handled through Zapier.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Contact Custom Fields</h3>
+        <span class="tag tag-pending">In place, not implemented</span>
+      </div>
+      <p>Contact-level custom fields that determine how an individual is communicated to. Field reference:</p>
+      <table style="width:100%; font-size:13px; border-collapse:collapse; margin-top:10px;">
+        <thead>
+          <tr style="background:var(--lavender-pale);">
+            <th style="text-align:left; padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-primary); font-weight:600;">Field</th>
+            <th style="text-align:left; padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-primary); font-weight:600;">Purpose & Options</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary); white-space:nowrap;"><strong>Contact Type</strong></td><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">Sales, Marketing, Logistics, Other, Primary, Prospect. Identifies the contact's department within a rep firm — determines whether they go into a marketing partner campaign or a rep firm campaign.</td></tr>
+          <tr><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary); white-space:nowrap;"><strong>Mailchimp Segment</strong></td><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">Maps the contact to a Mailchimp segment. Setting this on a new rep firm contact is what triggers the Zoho → Mailchimp contact creation automation. Critical field.</td></tr>
+          <tr><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary); white-space:nowrap;"><strong>Language Preference</strong></td><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">English or Spanish. Differentiates LATAM rep firm contacts for correct-language communication.</td></tr>
+          <tr><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary); white-space:nowrap;"><strong>Email Opt Out</strong></td><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">Intended to be automated via Zapier to reflect whether a contact has opted out of emails.</td></tr>
+          <tr><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary); white-space:nowrap;"><strong>Lead Source</strong></td><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">Where the contact originated.</td></tr>
+        </tbody>
+      </table>
+      <div class="sage-band" style="margin-top:12px;margin-bottom:0;">The ideal flow: a rep firm contact is added, the Mailchimp Segment field is set, and that triggers the Zoho → Mailchimp contact creation automation. This is the automation that keeps breaking and needs to be reconnected — see Reporting & Integrations tab.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Lead Records</h3>
+        <span class="tag tag-pending">Minimal setup</span>
+      </div>
+      <p>Not much has been built out for leads specifically. The main thing tracked is <strong>Lead Source</strong> — set based on which website form the lead came from, or which AHR event they were captured at (2024/2025). Beyond source attribution, lead records are largely untouched and would benefit from a defined structure as part of the lead scoring and lifecycle work.</p>
+      <div class="tool-expand-meta" style="margin-top:10px;">
+        <span>Tracked today: Lead Source (form or AHR event)</span>
+        <span>Related: Lead Scoring & Lifecycle — see Reporting tab</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Agree on a Full CRM Data Framework</h3>
+        <span class="tag tag-todo">Open decision</span>
+      </div>
+      <p>Cleaning up the CRM is a shared goal, but before investing the hours it makes sense to agree on a full data framework first — how accounts, contacts, and leads should be structured, which fields are required at each stage, naming conventions, and how the parent/child hierarchy is enforced. A defined framework prevents piecemeal cleanup that has to be redone later. This is a decision to align on with the new marketing lead and sales before the cleanup work begins.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Mailchimp</div>
+    <div class="card">
+      <div class="card-header">
+        <h3>Handoff to Heather</h3>
+        <span class="tag tag-pending">Pending</span>
+      </div>
+      <p>Document the exact format and method contacts are sent to Heather for Mailchimp import. Include required fields and any tags she needs applied before receiving the list.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>Audience Segments</h3></div>
+      <p>These are the core segments currently in use. Heather manages additional sub-segments based on engagement and other behavioral data — for full detail, ask her directly or check Mailchimp.</p>
+      <table style="width:100%; font-size:13px; border-collapse:collapse; margin-top:10px;">
+        <thead>
+          <tr style="background:var(--lavender-pale);">
+            <th style="text-align:left; padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-primary); font-weight:600;">Segment</th>
+            <th style="text-align:left; padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-primary); font-weight:600;">Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">US Rep Firms</td><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">All rep firms based in the US</td></tr>
+          <tr><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">LATAM Rep Firms</td><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">Rep firms in LATAM that require Spanish communication</td></tr>
+          <tr><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">US Rep Firms Marketing</td><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">All English rep firm marketing contacts for future collaboration</td></tr>
+          <tr><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">LATAM Rep Firms Marketing</td><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">All Spanish rep firm marketing contacts for future collaboration</td></tr>
+          <tr><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">US Prospects</td><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">All US prospect accounts or rep companies</td></tr>
+          <tr><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">LATAM Prospects - ES</td><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">Spanish-speaking LATAM prospects</td></tr>
+          <tr><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">LATAM Prospects - EN</td><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">English-speaking LATAM prospects</td></tr>
+          <tr><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);">Lunch & Learn Leads</td><td style="padding:8px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary); font-style:italic;">Name TBC — confirm with Heather</td></tr>
+        </tbody>
+      </table>
+      <div class="sage-band" style="margin-top:12px;margin-bottom:0;">Heather manages additional engagement-based sub-segments beyond this list. For the full picture, check Mailchimp directly or ask Heather.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Business Cards & Manual Entries</div>
+
+    <div class="card">
+      <div class="card-header"><h3>Employee Business Card Orders</h3></div>
+      <p>Employees submit business card orders via a shared spreadsheet. A Zapier automation notifies the marketing coordinator via Microsoft Teams when a new row is added. The process from there:</p>
+      <ul style="font-size:13px; color:var(--text-secondary); margin: 10px 0 10px 18px; line-height:1.9;">
+        <li>If it's a new employee, create their vCard QR code in Hovercode and add it to the Canva business card template</li>
+        <li>Place the order through the print vendor</li>
+        <li>Forward the invoice email to Chris G. (finance) as soon as the order is placed</li>
+      </ul>
+      <div style="margin-top:12px;">
+        <a href="https://mojavehvac.sharepoint.com/:x:/r/sites/mojave/Shared%20Documents/Employee%20Portal/Business%20Card%20Orders.xlsx?d=w0fd93a5b8c344f15b30ffdd089480766&csf=1&web=1&e=bAjVNC" target="_blank" style="display:inline-flex; align-items:center; gap:6px; background:var(--purple); color:white; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">📋 Business Card Orders Spreadsheet</a>
+      </div>
+      <div class="tool-expand-meta" style="margin-top:8px;">
+        <span>Trigger: Zapier → Teams notification on new row</span>
+        <span>QR code: Hovercode (vCard)</span>
+        <span>Template: Canva</span>
+        <span>Invoice currently to: Chris G. (office manager)</span>
+        <span>Next step: Transition invoice to new marketing lead's corporate card</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Inbound — Event Contact Intake</h3>
+        <span class="tag tag-todo">Document process</span>
+      </div>
+      <p>Business cards collected at trade shows and events need to be scanned, entered, and verified before being added to Zoho CRM. The scanning method and entry checklist need to be documented here.</p>
+    </div>
+  </div>
+
+
+  <div class="section">
+    <div class="section-label">Customer Satisfaction Survey</div>
+
+    <div class="card">
+      <div class="card-header"><h3>Current Process</h3></div>
+      <p>Customer satisfaction surveys are sent using Christine's SurveyMonkey account. Responses were previously tracked in a spreadsheet — this has not been maintained consistently. The process is simple today but needs to be formalized and automated.</p>
+      <div style="margin-top:12px;">
+        <a href="https://mojavehvac.sharepoint.com/:u:/r/sites/mojavemarketing/_layouts/15/Doc.aspx?sourcedoc=%7B60C19024-000E-49BB-9579-6EA71BC89B34%7D&file=Customer%20satisfaction%20survey%20process.vsdx&action=default&mobileredirect=true" target="_blank" style="display:inline-flex; align-items:center; gap:6px; background:var(--purple); color:white; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">📊 Survey Process Diagram</a>
+      </div>
+      <div class="tool-expand-meta" style="margin-top:12px;">
+        <span>Tool: Christine's SurveyMonkey account</span>
+        <span>Response tracking: Spreadsheet (inconsistent)</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Automation Opportunity</h3>
+        <span class="tag tag-todo">Needs scoping</span>
+      </div>
+      <p>The current process is manual end-to-end. Automating survey distribution and response capture is a priority. A key decision upstream of this is selecting a survey intake tool that can serve multiple purposes across the organization — not just customer satisfaction, but also training quizzes and other intake needs. Solving for the tool first unlocks the automation path.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Key Decision — Survey Tool Selection</h3>
+        <span class="tag tag-todo">Decision needed</span>
+      </div>
+      <p>SurveyMonkey is the current tool but it lives in Christine's personal account with no shared access or automation capability. A shared, integrated survey tool would need to support:</p>
+      <ul style="font-size:13px; color:var(--text-secondary); margin: 8px 0 10px 18px; line-height:1.9;">
+        <li>Customer satisfaction surveys</li>
+        <li>Training quizzes (Justin's operations workflow)</li>
+        <li>Automated distribution and response capture</li>
+        <li>Integration with Zoho CRM or Zapier for response tracking</li>
+      </ul>
+      <p>This decision affects multiple workflows — customer satisfaction, training operations, and potentially lead capture. Worth aligning on before building any automations around it.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Misc To-Dos</div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>🏢 Parent / Child Company Structure in Zoho</h3>
+        <span class="tag tag-pending">Low priority</span>
+      </div>
+      <p>Currently there is no distinction in Zoho CRM between parent rep firm companies and their individual office locations (child companies). The goal is to create that hierarchy so contacts can be properly attributed to the right office rather than just the top-level firm.</p>
+      <p style="margin-top:10px;">This is sitting at low priority given the volume of manual work required. However, with Claude now in the stack, there's an opportunity to accelerate this: feed the list of rep firm contact names to an LLM to scrape the web, identify individual contact locations, and make an educated guess as to which office each contact belongs to. Worth exploring as a smarter path forward.</p>
+      <div class="tool-expand-meta" style="margin-top:10px;">
+        <span>Priority: Low</span>
+        <span>Opportunity: Claude-assisted office attribution</span>
+        <span>Scope: All rep firm contacts in Zoho</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>📰 Engineer-Targeted Newsletter</h3>
+        <span class="tag tag-todo">To be built</span>
+      </div>
+      <p>A newsletter specifically targeted at engineers — a distinct audience from the general marketing list. Leads would come from events, the selector tool, and other technical touchpoints. Content mix:</p>
+      <ul style="font-size:13px; color:var(--text-secondary); margin: 8px 0 10px 18px; line-height:1.9;">
+        <li>Thought leadership and industry trends</li>
+        <li>Basis of design content — a topic sales specifically wants to develop; highly relevant to how engineers spec equipment</li>
+        <li>Mojave-focused technical content (ISMRE, dew point, ASHRAE compliance, liquid desiccant)</li>
+      </ul>
+      <p>This requires its own Mailchimp segment and a consistent content cadence. Basis of design is a priority signal from sales and should anchor the first few issues to establish credibility with the engineering audience.</p>
+      <div class="tool-expand-meta" style="margin-top:10px;">
+        <span>Audience: Engineers and specifiers</span>
+        <span>Lead sources: Events, selector tool</span>
+        <span>Key content pillar: Basis of design</span>
+        <span>Requires: Mailchimp segment, content plan, cadence</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Marketing Partners Network</div>
+
+    <div class="card">
+      <div class="card-header"><h3>Overview</h3></div>
+      <p>A program to strengthen Mojave's marketing efforts by building a direct relationship with the marketing teams at our rep firms — not just the sales contacts. The goal is to make it easy for rep firms to amplify Mojave content and represent the brand consistently in their own markets.</p>
+      <p style="margin-top:10px;">Developed by Juanita and Christy after reviewing three rep firm responses and researching which marketing channels their teams actually use.</p>
+      <div style="margin-top:12px;">
+        <a href="https://mojavehvac-my.sharepoint.com/:w:/r/personal/j_ossa_mojavehvac_com/_layouts/15/doc2.aspx?sourcedoc=%7BFA236959-AAA9-4046-AA84-05818336A17B%7D&file=Marketing%20Partner%20Network%20Recommendations.docx&action=default&mobileredirect=true&DefaultItemOpen=1" target="_blank" style="display:inline-flex; align-items:center; gap:6px; background:var(--purple); color:white; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">📄 Full Recommendations Doc</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>Proposed Three-Part Program</h3></div>
+      <ul style="font-size:13px; color:var(--text-secondary); margin: 8px 0 4px 18px; line-height:1.9;">
+        <li><strong>Quarterly roundup email</strong> — summarizes what's happening at Mojave that quarter (product updates, application briefs, case studies, press coverage) with links to all assets. Includes brief guidance on how rep firms can request collaboration or co-branded work.</li>
+        <li><strong>Targeted launch / announcement emails</strong> — a parallel version of the press release and major news emails already sent to the sales team, reframed for rep firm marketing teams. Includes draft LinkedIn post templates they can copy-paste, plus approved visual assets.</li>
+        <li><strong>Expanded asset repository</strong> — build on what's already in Rep Resources to include LinkedIn post templates, tech-specific graphics, product imagery, and other ready-to-use marketing content.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Open Questions — Pending Approval</h3>
+        <span class="tag tag-todo">Needs input</span>
+      </div>
+      <ul style="font-size:13px; color:var(--text-secondary); margin: 8px 0 4px 18px; line-height:1.9;">
+        <li>Approval of the three-part structure</li>
+        <li>Is quarterly the right cadence, or should communications go out more or less frequently?</li>
+        <li>What to prioritize first when expanding Rep Resources</li>
+        <li>Who is the named sender on rep firm marketing communications?</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══ REP FIRMS ══ -->
+<div id="rep-firms" class="tab-panel">
+  <div class="page-header">
+    <div class="page-eyebrow">Channel Partners</div>
+    <h1>Rep Firms</h1>
+    <p>Rep firms are their own beast — not employees, not a simple contact list. This tab covers onboarding, contact management, website maintenance, the marketing partners network, and the lead capture process.</p>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Onboarding</div>
+    <div class="card">
+      <div class="card-header"><h3>How It Works</h3></div>
+      <p>When a new rep firm is signed, the RSM makes an introduction via email between their key contact and Mojave marketing. This introduction is how we coordinate and get approval from their end before publishing the LinkedIn announcement post. From there, onboarding involves several moving parts across marketing, CRM, and the website.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>Contact Import</h3></div>
+      <p>New rep firm contacts come in a mix of formats — spreadsheets, PDFs, or CSV files. In most cases, the marketing coordinator manually imports these into Zoho CRM. Long-term, this should live with the RSM. The Zoho → Mailchimp automation was set up to handle this automatically but kept breaking — it is currently being reconnected. See Tools tab (Zapier) for status.</p>
+      <p style="margin-top: 10px;">When adding rep contacts to Zoho, three fields are critical and must always be set:</p>
+      <ul style="font-size:13px; color:var(--text-secondary); margin: 8px 0 10px 18px; line-height:1.9;">
+        <li><strong>Mailchimp Segment</strong> — required for the Zapier automation to route contacts correctly</li>
+        <li><strong>Language Preference</strong> — English or Spanish; Mojave supports LATAM contacts</li>
+        <li><strong>Contact Type</strong> — Sales or Marketing; determines how they're communicated to</li>
+      </ul>
+      <div class="sage-band" style="margin-bottom:0;">⚠️ Do not skip these three fields. They are the foundation of how contacts flow into Mailchimp and get segmented correctly.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">LinkedIn Announcement Process</div>
+    <div class="card">
+      <div class="card-header"><h3>New Rep Firm Announcement Posts</h3></div>
+      <p>Every new rep firm gets a LinkedIn announcement post. Here's the flow:</p>
+      <ul style="font-size:13px; color:var(--text-secondary); margin: 10px 0 10px 18px; line-height:1.9;">
+        <li>RSM makes email introduction between their rep firm contact and Mojave marketing</li>
+        <li>Marketing coordinator collects all required info (firm name, territory, contacts, any quotes)</li>
+        <li>Christy writes the copy — she owns the draft for this post type</li>
+        <li>Agree on publish day and time with stakeholders</li>
+        <li>Marketing coordinator schedules and publishes</li>
+      </ul>
+      <div class="tool-expand-meta" style="margin-top: 8px;">
+        <span>Copy: Christy</span>
+        <span>Publishing: Marketing Coordinator</span>
+        <span>Also see: LinkedIn tab → Cadence & Process</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Website — Rep Firm Updates</div>
+    <div class="card">
+      <div class="card-header"><h3>RSM Contact Page</h3></div>
+      <p>A directory on mojavehvac.com showing which RSM supports which rep firms, along with each RSM's contact information. When a new rep firm is added, the marketing coordinator updates this page in WP Admin. RSMs should be providing the relevant office and contact details — follow up with them if information is missing.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>Rep Locator</h3></div>
+      <p>An interactive map on mojavehvac.com showing all rep firm locations. Marketing coordinator adds new locations when a rep firm is onboarded. RSM is responsible for providing accurate office location details. The rep locator also has a lead capture component — see below.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Rep Locator — Lead Capture</h3>
+      </div>
+      <p>When a visitor submits the rep locator form, the lead flows automatically: the website form creates a lead in Zoho CRM, which triggers a Zapier automation that sends a notification to Mateo.</p>
+      <div style="margin-top:16px; overflow-x:auto;">
+        <svg viewBox="0 0 720 110" style="width:100%; min-width:600px; display:block;" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="rlArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M2 1L8 5L2 9" fill="none" stroke="#9B6BB8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+
+          <!-- Step 1: Website form -->
+          <rect x="6" y="30" width="150" height="50" rx="8" fill="#A8BC6A"/>
+          <text x="81" y="51" text-anchor="middle" fill="#fff" font-family="Inter, sans-serif" font-size="13" font-weight="600">Website Form</text>
+          <text x="81" y="67" text-anchor="middle" fill="#fff" font-family="Inter, sans-serif" font-size="10">Rep locator submission</text>
+
+          <line x1="156" y1="55" x2="196" y2="55" stroke="#9B6BB8" stroke-width="1.5" marker-end="url(#rlArrow)"/>
+          <text x="176" y="46" text-anchor="middle" fill="#1D9E75" font-family="Inter, sans-serif" font-size="8" font-weight="600">AUTO</text>
+
+          <!-- Step 2: Zoho lead -->
+          <rect x="198" y="30" width="150" height="50" rx="8" fill="#4B4760"/>
+          <text x="273" y="51" text-anchor="middle" fill="#fff" font-family="Inter, sans-serif" font-size="13" font-weight="600">Zoho CRM</text>
+          <text x="273" y="67" text-anchor="middle" fill="#fff" font-family="Inter, sans-serif" font-size="10">Lead created</text>
+
+          <line x1="348" y1="55" x2="388" y2="55" stroke="#9B6BB8" stroke-width="1.5" marker-end="url(#rlArrow)"/>
+          <text x="368" y="46" text-anchor="middle" fill="#1D9E75" font-family="Inter, sans-serif" font-size="8" font-weight="600">TRIGGER</text>
+
+          <!-- Step 3: Zapier -->
+          <rect x="390" y="30" width="150" height="50" rx="8" fill="#4B4760"/>
+          <text x="465" y="51" text-anchor="middle" fill="#fff" font-family="Inter, sans-serif" font-size="13" font-weight="600">Zapier</text>
+          <text x="465" y="67" text-anchor="middle" fill="#fff" font-family="Inter, sans-serif" font-size="10">Automation fires</text>
+
+          <line x1="540" y1="55" x2="580" y2="55" stroke="#9B6BB8" stroke-width="1.5" marker-end="url(#rlArrow)"/>
+
+          <!-- Step 4: Notify Mateo -->
+          <rect x="582" y="30" width="132" height="50" rx="8" fill="#7C499F"/>
+          <text x="648" y="51" text-anchor="middle" fill="#fff" font-family="Inter, sans-serif" font-size="13" font-weight="600">Notify Mateo</text>
+          <text x="648" y="67" text-anchor="middle" fill="#fff" font-family="Inter, sans-serif" font-size="10">Lead alert sent</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Marketing Partners Network</div>
+    <div class="card">
+      <div class="card-header">
+        <h3>See CRM & MAPS</h3>
+        <span class="tag tag-todo">Needs to be picked back up</span>
+      </div>
+      <p>The Marketing Partners Network — the initiative to build structured marketing relationships with rep firm marketing teams — is documented in full on the <strong>CRM & MAPS</strong> tab, including the proposed three-part program, open questions, and the recommendations document.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Active Rep Firms</div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Mateo Cardona — Director of Rep Sales</h3>
+      </div>
+      <p style="font-size:12px; color:var(--text-muted); font-family:'DM Mono',monospace; margin-bottom:8px;">Miami, FL &nbsp;·&nbsp; 305-767-0088 &nbsp;·&nbsp; m.cardona@mojavehvac.com</p>
+      <p style="font-size:13px; color:var(--text-secondary);">Oversees all U.S. Rep Company partnerships. Also serves as RSM for Latin America Rep Companies.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Luke Mitchell — RSM</h3>
+      </div>
+      <p style="font-size:12px; color:var(--text-muted); font-family:'DM Mono',monospace; margin-bottom:8px;">Louisville, KY &nbsp;·&nbsp; 502-298-3484 &nbsp;·&nbsp; l.mitchell@mojavehvac.com</p>
+      <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;">
+        <span class="tag tag-pending">Air Equipment Company</span>
+        <span class="tag tag-pending">Ewing Kessler</span>
+        <span class="tag tag-pending">The Glacier Group</span>
+        <span class="tag tag-pending">Koch Applied</span>
+        <span class="tag tag-pending">Mechanical Sales, Inc.</span>
+        <span class="tag tag-pending">Stephany Associates</span>
+        <span class="tag tag-pending">Trane Iowa</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Bryce Rosenquist — RSM</h3>
+      </div>
+      <p style="font-size:12px; color:var(--text-muted); font-family:'DM Mono',monospace; margin-bottom:8px;">Grafton, WI &nbsp;·&nbsp; 702-232-4593 &nbsp;·&nbsp; b.rosenquist@mojavehvac.com</p>
+      <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;">
+        <span class="tag tag-pending">DMG</span>
+        <span class="tag tag-pending">DMG Hawaii</span>
+        <span class="tag tag-pending">Hunton Trane</span>
+        <span class="tag tag-pending">Midwest Mechanical Solutions</span>
+        <span class="tag tag-pending">Pear MSSD</span>
+        <span class="tag tag-pending">TEC</span>
+        <span class="tag tag-pending">Trane Northern California & Nevada</span>
+        <span class="tag tag-pending">Trane Colorado & Wyoming</span>
+        <span class="tag tag-pending">Trane Oregon</span>
+        <span class="tag tag-pending">Trane Texas</span>
+        <span class="tag tag-pending">Trane Washington</span>
+        <span class="tag tag-pending">Varitec</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Brian Schmidt — RSM</h3>
+      </div>
+      <p style="font-size:12px; color:var(--text-muted); font-family:'DM Mono',monospace; margin-bottom:8px;">Jacksonville, FL &nbsp;·&nbsp; 904-366-9752 &nbsp;·&nbsp; b.schmidt@mojavehvac.com</p>
+      <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;">
+        <span class="tag tag-pending">Holden & Associates</span>
+        <span class="tag tag-pending">Tom Barrow Company</span>
+        <span class="tag tag-pending">Trane Arkansas</span>
+        <span class="tag tag-pending">Trane Michigan</span>
+        <span class="tag tag-pending">Trane Ohio</span>
+        <span class="tag tag-pending">Trane Oklahoma</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Stephen Wrightenberry — RSM</h3>
+      </div>
+      <p style="font-size:12px; color:var(--text-muted); font-family:'DM Mono',monospace; margin-bottom:8px;">Wilmington, NC &nbsp;·&nbsp; 910-604-4013 &nbsp;·&nbsp; s.wrightenberry@mojavehvac.com</p>
+      <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;">
+        <span class="tag tag-pending">APA HVAC Technologies</span>
+        <span class="tag tag-pending">Coward Environmental Systems, Inc.</span>
+        <span class="tag tag-pending">Hobbs & Associates</span>
+        <span class="tag tag-pending">Hoffman & Hoffman</span>
+        <span class="tag tag-pending">Klima NJ</span>
+        <span class="tag tag-pending">Klima NY</span>
+        <span class="tag tag-pending">RF Peck</span>
+        <span class="tag tag-pending">Trane Tennessee</span>
+      </div>
+    </div>
+
+    <div class="sage-band">Rep firm tags are styled for visibility only — not a status indicator. Link each rep firm to their Zoho account record once confirmed.</div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Collateral & Resources</div>
+    <div class="card">
+      <div class="card-header"><h3>Rep Resources Page</h3></div>
+      <p>All collateral and resources for rep firms are shared via a single URL. Direct all rep firms here for sell sheets, one-pagers, product specs, and brand assets.</p>
+      <div style="margin-top:12px;">
+        <a href="https://mojavehvac.com/represources" target="_blank" style="display:inline-flex; align-items:center; gap:6px; background:var(--purple); color:white; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">🔗 mojavehvac.com/represources</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Rep Awards Program</div>
+
+    <div class="card">
+      <div class="card-header"><h3>Overview</h3></div>
+      <p>In 2025 Mojave launched its first-ever rep awards program — recognizing top-performing rep firms. The program included custom certificates and was supported by both email and LinkedIn campaigns. It was a significant moment for the rep firm relationships and set a precedent for annual recognition.</p>
+      <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+        <a href="https://mojavehvac.sharepoint.com/:w:/r/sites/mojavemarketing/_layouts/15/Doc.aspx?sourcedoc=%7B5E959C4A-A4F9-47E2-90C5-1E93D33B0C47%7D&file=2025%20Award%20Program%20plan.docx&action=default&mobileredirect=true&DefaultItemOpen=1" target="_blank" style="display:inline-flex; align-items:center; gap:6px; background:var(--purple); color:white; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">📄 2025 Award Program Plan</a>
+        <a href="https://mojavehvac.sharepoint.com/:w:/r/sites/mojavemarketing/_layouts/15/Doc.aspx?sourcedoc=%7BC554DC5A-E2C6-4F5C-8B11-6E5FF02A7A37%7D&file=List%20of%202025%20winners.docx&action=default&mobileredirect=true&DefaultItemOpen=1" target="_blank" style="display:inline-flex; align-items:center; gap:6px; background:var(--lavender); color:var(--purple-dark); border:1px solid var(--border-strong); padding:8px 14px; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">🏆 2025 Winners List</a>
+      </div>
+      <div class="tool-expand-meta" style="margin-top:12px;">
+        <span>First year: 2025</span>
+        <span>Deliverables: Certificates, email campaign, LinkedIn campaign</span>
+        <span>Also see: LinkedIn tab → Events pillar</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ WEBSITE ══ -->
+<div id="website" class="tab-panel">
+  <div class="page-header">
+    <div class="page-eyebrow">Digital Presence</div>
+    <h1>Website</h1>
+    <p>Pages, forms, press, PDF management, and the rep locator. Most content-level updates are handled by the marketing coordinator directly in WP Admin. Structural changes go through Chris Anton with Christine's approval.</p>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Pages — Marketing Coordinator Manages</div>
+
+    <div class="card">
+      <div class="card-header"><h3>U.S. Partners Page</h3></div>
+      <p>Houses all U.S. rep firm collateral and resources. Updated when new PDFs are added or swapped out, or when rep firm information changes. Also where the rep locator lives — updated in tandem during rep firm onboarding.</p>
+      <div style="margin-top:10px;">
+        <a href="https://mojavehvac.com/represources" target="_blank" style="display:inline-flex; align-items:center; gap:6px; background:var(--purple); color:white; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">🔗 mojavehvac.com/represources</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>LATAM Partners Page</h3></div>
+      <p>Spanish-language partner resources page for Latin America rep firms. Managed the same way as the U.S. Partners Page — updated during LATAM rep firm onboarding or when resources change.</p>
+      <div style="margin-top:10px;">
+        <a href="https://mojavehvac.com/latamreps" target="_blank" style="display:inline-flex; align-items:center; gap:6px; background:var(--purple); color:white; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">🔗 mojavehvac.com/latamreps</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>RSM Contacts Page</h3></div>
+      <p>Directory showing which RSM supports which rep firms, with each RSM's contact information. Updated when a new rep firm is added or RSM assignments change. RSMs are responsible for providing accurate information — follow up with them if details are missing.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>Rep Locator</h3></div>
+      <p>Interactive map of all rep firm locations on mojavehvac.com. Updated during rep firm onboarding alongside the U.S. Partners Page. RSMs provide office location details. Also includes a lead capture form — see Forms section below.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Forms & Lead Capture</div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Lunch & Learn Form</h3>
+        <span class="tag tag-todo">Decision needed</span>
+      </div>
+      <p>Captures Lunch & Learn event signups and flows into Zoho CRM. Open question: should this be split into two separate forms — one for Demo Unit events and one for Lunch & Learn? Worth deciding before building out the Zapier automation further, since the form structure affects how contacts are segmented.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>Training Sign-Up Form</h3></div>
+      <p>Captures training event registrations. Flows into Zoho CRM.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>Rep Locator Lead Capture</h3></div>
+      <p>When a visitor submits the rep locator form, the lead flows automatically: the website form creates a lead in Zoho CRM, which triggers a Zapier automation that sends a notification to Mateo.</p>
+      <div style="margin-top:16px; overflow-x:auto;">
+        <svg viewBox="0 0 720 110" style="width:100%; min-width:600px; display:block;" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="rlArrow2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M2 1L8 5L2 9" fill="none" stroke="#9B6BB8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+          <rect x="6" y="30" width="150" height="50" rx="8" fill="#A8BC6A"/>
+          <text x="81" y="51" text-anchor="middle" fill="#fff" font-family="Inter, sans-serif" font-size="13" font-weight="600">Website Form</text>
+          <text x="81" y="67" text-anchor="middle" fill="#fff" font-family="Inter, sans-serif" font-size="10">Rep locator submission</text>
+          <line x1="156" y1="55" x2="196" y2="55" stroke="#9B6BB8" stroke-width="1.5" marker-end="url(#rlArrow2)"/>
+          <text x="176" y="46" text-anchor="middle" fill="#1D9E75" font-family="Inter, sans-serif" font-size="8" font-weight="600">AUTO</text>
+          <rect x="198" y="30" width="150" height="50" rx="8" fill="#4B4760"/>
+          <text x="273" y="51" text-anchor="middle" fill="#fff" font-family="Inter, sans-serif" font-size="13" font-weight="600">Zoho CRM</text>
+          <text x="273" y="67" text-anchor="middle" fill="#fff" font-family="Inter, sans-serif" font-size="10">Lead created</text>
+          <line x1="348" y1="55" x2="388" y2="55" stroke="#9B6BB8" stroke-width="1.5" marker-end="url(#rlArrow2)"/>
+          <text x="368" y="46" text-anchor="middle" fill="#1D9E75" font-family="Inter, sans-serif" font-size="8" font-weight="600">TRIGGER</text>
+          <rect x="390" y="30" width="150" height="50" rx="8" fill="#4B4760"/>
+          <text x="465" y="51" text-anchor="middle" fill="#fff" font-family="Inter, sans-serif" font-size="13" font-weight="600">Zapier</text>
+          <text x="465" y="67" text-anchor="middle" fill="#fff" font-family="Inter, sans-serif" font-size="10">Automation fires</text>
+          <line x1="540" y1="55" x2="580" y2="55" stroke="#9B6BB8" stroke-width="1.5" marker-end="url(#rlArrow2)"/>
+          <rect x="582" y="30" width="132" height="50" rx="8" fill="#7C499F"/>
+          <text x="648" y="51" text-anchor="middle" fill="#fff" font-family="Inter, sans-serif" font-size="13" font-weight="600">Notify Mateo</text>
+          <text x="648" y="67" text-anchor="middle" fill="#fff" font-family="Inter, sans-serif" font-size="10">Lead alert sent</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Press Releases & In the Press</div>
+    <div class="card">
+      <div class="card-header"><h3>Process</h3></div>
+      <p>Press releases are typically handled by Christine. The marketing coordinator's role is to add "In the Press" links to the website and upload the publisher logo when coverage goes live.</p>
+      <div class="tool-expand-meta" style="margin-top:10px;">
+        <span>Press release copy: Christine</span>
+        <span>In the Press links + logos: Marketing Coordinator</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">PDF Management & Redirects</div>
+    <div class="card">
+      <div class="card-header"><h3>When a PDF Changes</h3></div>
+      <p>When a PDF is updated, three things need to happen in sequence:</p>
+      <ul style="font-size:13px; color:var(--text-secondary); margin: 10px 0 10px 18px; line-height:1.9;">
+        <li>Upload the new PDF under <strong>Media</strong> in WP Admin — this is what generates the new URL for the file</li>
+        <li>Swap the URL on the relevant rep resources page (U.S. or LATAM) in WP Admin to point to the new file</li>
+        <li>Set up a redirect in WP Engine from the old PDF URL to the new one — this ensures any buttons or links elsewhere on the site that point to the old file automatically forward to the updated version</li>
+      </ul>
+      <div class="sage-band" style="margin-bottom:0;">⚠️ Don't skip the WP Engine redirect step. Links to PDFs live in multiple places across the site — missing a redirect means broken downloads for anyone who has the old URL bookmarked or shared.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Approval Chain</div>
+    <div class="card">
+      <div class="card-header">
+        <h3>Christine Sign-Off</h3>
+        <span class="tag tag-pending">Pending</span>
+      </div>
+      <p>Significant website changes require Christine's approval. Document what she needs to review, at what stage, and in what format (staging link, screenshots, etc.).</p>
+      <div class="tool-expand-meta" style="margin-top:10px;">
+        <span>Developer: Chris Anton</span>
+        <span>Approver: Christine</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Current Open Requests</div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Standing — New Rep Firm Page Updates</h3>
+        <span class="tag tag-pending">Always open</span>
+      </div>
+      <p>Every time a new rep firm is onboarded, two pages need to be updated: the RSM Contacts page and the Rep Locator. These are recurring tasks tied to the rep firm onboarding process — not one-off requests. See Rep Firms tab for the full onboarding flow.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Product Name Updates</h3>
+        <span class="tag tag-done">Done</span>
+      </div>
+      <p>Product name updates across the website have been completed.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Spanish Translations — LATAM Rep Page</h3>
+        <span class="tag tag-pending">In progress</span>
+      </div>
+      <p>The following documents need to be translated into Spanish and uploaded to the LATAM Partners page (mojavehvac.com/latamreps):</p>
+      <ul style="font-size:13px; color:var(--text-secondary); margin: 10px 0 10px 18px; line-height:1.9;">
+        <li>ArctiDry DX Guide Spec (.docx)</li>
+        <li>ArctiDry Hydro Guide Spec (.docx)</li>
+        <li>Munters vs. ArctiDry DX (.pdf)</li>
+      </ul>
+      <div class="tool-expand-meta" style="margin-top:8px;">
+        <span>Target page: <a href="https://mojavehvac.com/latamreps" target="_blank">mojavehvac.com/latamreps</a></span>
+        <span>Status: Translation in progress</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOOLS ══ -->
+<div id="tools" class="tab-panel">
+  <div class="page-header">
+    <div class="page-eyebrow">Tech Stack</div>
+    <h1>Tools</h1>
+    <p>Click the icon or tool name to go directly to the login page. Click anywhere on a card to expand usage details.</p>
+  </div>
+
+  <div class="notice" style="border-left-color: var(--purple); background: var(--lavender-pale);">
+    <strong>🔐 A note on security</strong> — I take password management seriously. 1Password is my personal account — not a Mojave tool — and I use it to ensure shared credentials are never passed over email, chat, or documents. Any tool marked "Shared · 1Password" is accessible through a vault I've shared with you. This is intentional: credentials should always be handled with care, and this is how I make sure they are.
+  </div>
+
+  <div class="section">
+    <div class="section-label">Platform Directory</div>
+
+    <!-- ZOHO CRM -->
+    <div class="tool-card" onclick="toggleTool('zoho')">
+      <div class="tool-card-main">
+        <a class="tool-link" href="https://crm.zoho.com" target="_blank" onclick="event.stopPropagation()">
+          <div class="tool-icon">📊</div>
+          <div class="tool-info">
+            <div class="tool-name">Zoho CRM</div>
+            <div class="tool-desc">Contact, account, and deal management</div>
+          </div>
+        </a>
+        <div class="tool-card-right">
+          <span class="tag tag-personal">Personal Login</span>
+          <span class="tool-chevron" id="chevron-zoho">›</span>
+        </div>
+      </div>
+      <div class="tool-expand" id="expand-zoho">
+        <div class="tool-expand-inner">
+          <p>Primary CRM for all contacts, accounts, and deals. No single person formally owns it — in practice, the marketing coordinator has driven the most significant cleanup and configuration work to date. The marketing coordinator is the data gatekeeper: no contact reaches Mailchimp without being entered and verified here first.</p>
+          <p>Significant work has gone into improving the system:</p>
+          <ul style="font-size:13px; color:var(--text-secondary); margin: 8px 0 12px 18px; line-height:1.9;">
+            <li>Extensive contact and account cleanup completed</li>
+            <li>Multiple custom fields created to track key data points, including Mailchimp segmentation fields that are critical for the Zapier automation to function correctly</li>
+            <li>Ongoing work with Mateo to enforce CRM best practices across the sales team</li>
+          </ul>
+          <div class="sage-band" style="margin-bottom:0;">⚠️ Full transparency: the data structure has some quirks and is not in perfect shape — but it is meaningfully better than it was. Approach with awareness and ask before making structural changes.</div>
+          <div class="tool-expand-meta" style="margin-top:12px;">
+            <span>Owner: No formal owner</span>
+            <span>Connects to: Power BI via Postman, Mailchimp via Zapier</span>
+            <span>Key collaborator: Mateo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAILCHIMP -->
+    <div class="tool-card" onclick="toggleTool('mailchimp')">
+      <div class="tool-card-main">
+        <a class="tool-link" href="https://login.mailchimp.com" target="_blank" onclick="event.stopPropagation()">
+          <div class="tool-icon">📧</div>
+          <div class="tool-info">
+            <div class="tool-name">Mailchimp</div>
+            <div class="tool-desc">Email marketing execution and audience management</div>
+          </div>
+        </a>
+        <div class="tool-card-right">
+          <span class="tag tag-personal">Personal Login</span>
+          <span class="tool-chevron" id="chevron-mailchimp">›</span>
+        </div>
+      </div>
+      <div class="tool-expand" id="expand-mailchimp">
+        <div class="tool-expand-inner">
+          <p>Owned and operated by Heather. Marketing coordinator's role is upstream — approving and formatting contacts in Zoho before passing them to Heather for import. Do not add contacts to Mailchimp directly; they must clear the Zoho gatekeeping process first.</p>
+          <p>Recent updates worth knowing:</p>
+          <ul style="font-size:13px; color:var(--text-secondary); margin: 8px 0 12px 18px; line-height:1.9;">
+            <li>Account was upgraded earlier this year to support campaign triggering — this enables the Lunch & Learn automation flow being built in Zapier</li>
+            <li>Segmentations were cleaned up earlier this year — audience structure is in a much better state than it was</li>
+          </ul>
+          <div class="tool-expand-meta">
+            <span>Owner: Heather</span>
+            <span>Connects to: Zoho CRM via Zapier (in progress) and manual handoff</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ZAPIER -->
+    <div class="tool-card" onclick="toggleTool('zapier')">
+      <div class="tool-card-main">
+        <a class="tool-link" href="https://zapier.com/app/login" target="_blank" onclick="event.stopPropagation()">
+          <div class="tool-icon">⚡</div>
+          <div class="tool-info">
+            <div class="tool-name">Zapier</div>
+            <div class="tool-desc">Zoho → Mailchimp automation</div>
+          </div>
+        </a>
+        <div class="tool-card-right">
+          <span class="tag tag-shared">Shared · 1Password</span>
+          <span class="tool-chevron" id="chevron-zapier">›</span>
+        </div>
+      </div>
+      <div class="tool-expand" id="expand-zapier">
+        <div class="tool-expand-inner">
+          <p>Added specifically to facilitate the Zoho → Mailchimp sync. The end-to-end flow for adding leads from Lunch & Learn events into a marketing campaign has been built and tested successfully. Two things still need to happen before this is fully operational:</p>
+          <ul style="font-size:13px; color:var(--text-secondary); margin: 10px 0 12px 18px; line-height:1.9;">
+            <li>Reconnect with Heather to enable the Lunch & Learn campaign flow</li>
+            <li>Reconnect the Zoho → Mailchimp contact creation Zap so rep firm contacts flow automatically without manual intervention</li>
+          </ul>
+          <p>Full automation inventory lives in the <strong>Ideas & Unfinished Projects</strong> tab.</p>
+          <div class="tool-expand-meta" style="margin-top:12px;">
+            <span>Access: Access sent via email</span>
+            <span>Connects to: Zoho CRM → Mailchimp</span>
+            <span>Coordinate with: Heather</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POWER BI -->
+    <div class="tool-card" onclick="toggleTool('powerbi')">
+      <div class="tool-card-main">
+        <a class="tool-link" href="https://app.powerbi.com" target="_blank" onclick="event.stopPropagation()">
+          <div class="tool-icon">📈</div>
+          <div class="tool-info">
+            <div class="tool-name">Power BI</div>
+            <div class="tool-desc">Dashboards and reporting</div>
+          </div>
+        </a>
+        <div class="tool-card-right">
+          <span class="tag tag-personal">Personal Login</span>
+          <span class="tool-chevron" id="chevron-powerbi">›</span>
+        </div>
+      </div>
+      <div class="tool-expand" id="expand-powerbi">
+        <div class="tool-expand-inner">
+          <p>Owned and managed by Mateo. Used exclusively for sales reporting. This exists to bridge a significant gap in Zoho Analytics — most notably the inability to filter by account name, which is critical for how the sales team reviews pipeline data. The Zoho CRM → Power BI connection was built and facilitated by the marketing coordinator using Postman and was a substantial effort. Understand the pipeline before making any changes to it. Go to Mateo for dashboard questions; go to the Reporting & Integrations tab for how the underlying connection works.</p>
+          <div class="tool-expand-meta">
+            <span>Owner: Mateo</span>
+            <span>Integration built by: Marketing Coordinator</span>
+            <span>Connects to: Zoho CRM via Postman</span>
+            <span>Why it exists: Zoho Analytics cannot filter by account name</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POSTMAN -->
+    <div class="tool-card" onclick="toggleTool('postman')">
+      <div class="tool-card-main">
+        <div class="tool-link" style="cursor:default;">
+          <div class="tool-icon">🔌</div>
+          <div class="tool-info">
+            <div class="tool-name">Postman</div>
+            <div class="tool-desc">Zoho → Power BI data pipeline</div>
+          </div>
+        </div>
+        <div class="tool-card-right">
+          <span class="tag tag-pending">Awareness only</span>
+          <span class="tool-chevron" id="chevron-postman">›</span>
+        </div>
+      </div>
+      <div class="tool-expand" id="expand-postman">
+        <div class="tool-expand-inner">
+          <p>The invisible thread that stitches Zoho and Power BI together. You don't need access to this — it's worth knowing it exists and what it does. There are two separate accounts:</p>
+          <ul style="font-size:13px; color:var(--text-secondary); margin: 8px 0 12px 18px; line-height:1.9;">
+            <li><strong>Mateo's account</strong> — primary. He runs it twice a week to pull updated data from Zoho into Power BI for sales reporting</li>
+            <li><strong>Marketing Coordinator's account</strong> — personal free account kept as a backup</li>
+          </ul>
+          <p>If the Power BI data ever looks stale or wrong, Postman is where to start the investigation. Loop in Mateo first.</p>
+          <div class="tool-expand-meta" style="margin-top:12px;">
+            <span>Accounts: Mateo (primary), Marketing Coordinator (backup)</span>
+            <span>Cadence: Mateo runs twice a week</span>
+            <span>Connects to: Zoho CRM → Power BI</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MARKETING ONEDRIVE -->
+    <div class="tool-card" onclick="toggleTool('onedrive')">
+      <div class="tool-card-main">
+        <a class="tool-link" href="https://login.microsoftonline.com" target="_blank" onclick="event.stopPropagation()">
+          <div class="tool-icon">☁️</div>
+          <div class="tool-info">
+            <div class="tool-name">Marketing OneDrive</div>
+            <div class="tool-desc">Shared file storage for marketing assets and documents</div>
+          </div>
+        </a>
+        <div class="tool-card-right">
+          <span class="tag tag-personal">Personal Login</span>
+          <span class="tag tag-pending">Revisit</span>
+          <span class="tool-chevron" id="chevron-onedrive">›</span>
+        </div>
+      </div>
+      <div class="tool-expand" id="expand-onedrive">
+        <div class="tool-expand-inner">
+          <p>Central repository for marketing files — collateral, one-pagers, brand assets, and campaign materials. Initial cleanup was started and documentation exists outlining the intended folder structure and navigation approach. That work is worth revisiting and building on.</p>
+          <div class="sage-band" style="margin: 10px 0;">⚠️ Be cautious about moving documents between folders. People share direct links to files, and relocating them breaks those links and cuts off access without warning.</div>
+          <div class="tool-expand-meta">
+            <span>Owner: Marketing</span>
+            <span>Platform: Microsoft 365</span>
+          </div>
+          <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+            <a href="https://outlook.office.com/host/377c982d-9686-450e-9a7c-22aeaf1bc162/7211f19f-262a-42eb-a02e-289956491741" target="_blank" onclick="event.stopPropagation()" style="display:inline-flex; align-items:center; gap:6px; background:var(--purple); color:white; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">☁️ Open Marketing Drive</a>
+            <a href="https://mojavehvac.sharepoint.com/:w:/r/sites/mojavemarketing/_layouts/15/Doc.aspx?sourcedoc=%7B0912FDE9-3AC1-486E-ADBB-9C2341FCA2F3%7D&file=START%20HERE.docx&action=default&mobileredirect=true&wdOrigin=OUTLOOK-METAOS.FILEBROWSER" target="_blank" onclick="event.stopPropagation()" style="display:inline-flex; align-items:center; gap:6px; background:var(--lavender); color:var(--purple-dark); border:1px solid var(--border-strong); padding:8px 14px; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">📄 How to Navigate the Drive</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CANVA -->
+    <div class="tool-card" onclick="toggleTool('canva')">
+      <div class="tool-card-main">
+        <a class="tool-link" href="https://www.canva.com/login" target="_blank" onclick="event.stopPropagation()">
+          <div class="tool-icon">🎨</div>
+          <div class="tool-info">
+            <div class="tool-name">Canva</div>
+            <div class="tool-desc">PDFs, LinkedIn graphics, and business cards</div>
+          </div>
+        </a>
+        <div class="tool-card-right">
+          <span class="tag tag-shared">Shared · 1Password</span>
+          <span class="tool-chevron" id="chevron-canva">›</span>
+        </div>
+      </div>
+      <div class="tool-expand" id="expand-canva">
+        <div class="tool-expand-inner">
+          <p>Used to create PDFs, LinkedIn post images, and business cards. Heather has been the primary user. The marketing coordinator accesses it to edit LinkedIn post images or set up their own. Shared account managed via 1Password.</p>
+          <div class="tool-expand-meta">
+            <span>Access: Access sent via email</span>
+            <span>Primary users: Heather, Marketing Coordinator</span>
+            <span>Primary use: PDFs, LinkedIn images, business cards</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HOVERCODE -->
+    <div class="tool-card" onclick="toggleTool('hovercode')">
+      <div class="tool-card-main">
+        <a class="tool-link" href="https://hovercode.com/login" target="_blank" onclick="event.stopPropagation()">
+          <div class="tool-icon">⬛</div>
+          <div class="tool-info">
+            <div class="tool-name">Hovercode</div>
+            <div class="tool-desc">Dynamic QR code management</div>
+          </div>
+        </a>
+        <div class="tool-card-right">
+          <span class="tag tag-shared">Shared · 1Password</span>
+          <span class="tool-chevron" id="chevron-hovercode">›</span>
+        </div>
+      </div>
+      <div class="tool-expand" id="expand-hovercode">
+        <div class="tool-expand-inner">
+          <p>Used for dynamic QR codes across events, business cards, and other printed materials. The key advantage of dynamic codes is that the destination URL can be updated without reprinting — critical when PDFs or landing pages change.</p>
+          <div class="tool-expand-meta">
+            <span>Access: Access sent via email</span>
+            <span>Primary use: Events, business cards, collateral</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WP ENGINE -->
+    <div class="tool-card" onclick="toggleTool('wpengine')">
+      <div class="tool-card-main">
+        <a class="tool-link" href="https://my.wpengine.com/installs/mojavehvacprod/wren" target="_blank" onclick="event.stopPropagation()">
+          <div class="tool-icon">🔧</div>
+          <div class="tool-info">
+            <div class="tool-name">WP Engine</div>
+            <div class="tool-desc">Website hosting and redirect management</div>
+          </div>
+        </a>
+        <div class="tool-card-right">
+          <span class="tag tag-shared">Shared · 1Password</span>
+          <span class="tool-chevron" id="chevron-wpengine">›</span>
+        </div>
+      </div>
+      <div class="tool-expand" id="expand-wpengine">
+        <div class="tool-expand-inner">
+          <p>Backend hosting platform for mojavehvac.com. Primary use in day-to-day marketing is managing redirect links — especially when PDFs are updated and the old URL needs to forward to the new file. Shared account managed via 1Password.</p>
+          <div class="tool-expand-meta">
+            <span>Access: Access sent via email</span>
+            <span>Primary use: Redirect links for updated PDFs</span>
+            <span>Relates to: WP Admin, Chris Anton</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GOOGLE ANALYTICS -->
+    <div class="tool-card" onclick="toggleTool('ga')">
+      <div class="tool-card-main">
+        <a class="tool-link" href="https://analytics.google.com" target="_blank" onclick="event.stopPropagation()">
+          <div class="tool-icon">📉</div>
+          <div class="tool-info">
+            <div class="tool-name">Google Analytics</div>
+            <div class="tool-desc">Website traffic and performance tracking</div>
+          </div>
+        </a>
+        <div class="tool-card-right">
+          <span class="tag tag-shared">Shared · 1Password</span>
+          <span class="tool-chevron" id="chevron-ga">›</span>
+        </div>
+      </div>
+      <div class="tool-expand" id="expand-ga">
+        <div class="tool-expand-inner">
+          <p>Used to monitor mojavehvac.com traffic and page performance. The marketing coordinator checks in once a month to review the most recent activity — nothing more involved than that. Shared login managed via 1Password vault.</p>
+          <div class="tool-expand-meta">
+            <span>Access: Access sent via email</span>
+            <span>Cadence: Monthly review</span>
+            <span>Relates to: mojavehvac.com</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WP ADMIN -->
+    <div class="tool-card" onclick="toggleTool('wpadmin')">
+      <div class="tool-card-main">
+        <a class="tool-link" href="https://mojavehvac.com/wp-admin" target="_blank" onclick="event.stopPropagation()">
+          <div class="tool-icon">🌐</div>
+          <div class="tool-info">
+            <div class="tool-name">WP Admin</div>
+            <div class="tool-desc">WordPress admin panel for mojavehvac.com</div>
+          </div>
+        </a>
+        <div class="tool-card-right">
+          <span class="tag tag-personal">Personal Login</span>
+          <span class="tool-chevron" id="chevron-wpadmin">›</span>
+        </div>
+      </div>
+      <div class="tool-expand" id="expand-wpadmin">
+        <div class="tool-expand-inner">
+          <p>Primary admin panel for the website. The marketing coordinator uses this to update pages, manage media, publish posts, and maintain the rep locator. Structural or design changes go through Chris Anton — this is for content-level work that has already been approved by Christine.</p>
+          <div class="tool-expand-meta">
+            <span>Owner: Marketing Coordinator + Chris Anton</span>
+            <span>Approval required: Christine for significant changes</span>
+            <span>Key tasks: Pages, media, posts, rep locator</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTION -->
+    <div class="tool-card" onclick="toggleTool('notion')">
+      <div class="tool-card-main">
+        <a class="tool-link" href="https://app.notion.com/p/Mojave-GTD-0c0edd376a0c82e59f8981b04204f68c?source=copy_link" target="_blank" onclick="event.stopPropagation()">
+          <div class="tool-icon">📓</div>
+          <div class="tool-info">
+            <div class="tool-name">Notion — Mojave GTD</div>
+            <div class="tool-desc">Shared project tracking</div>
+          </div>
+        </a>
+        <div class="tool-card-right">
+          <span class="tag tag-pending">New — pending adoption</span>
+          <span class="tool-chevron" id="chevron-notion">›</span>
+        </div>
+      </div>
+      <div class="tool-expand" id="expand-notion">
+        <div class="tool-expand-inner">
+          <p>A Notion page set up to track projects worked on together. New addition to the stack — not yet in regular use, but available as a shared space to coordinate ongoing work. Open to seeing whether it sticks as the go-to project tracker.</p>
+          <div class="tool-expand-meta">
+            <span>Status: New, pending adoption</span>
+            <span>Use: Shared project / task tracking</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ REPORTING ══ -->
+<div id="reporting" class="tab-panel">
+  <div class="page-header">
+    <div class="page-eyebrow">Data & Automation</div>
+    <h1>Reporting & Integrations</h1>
+    <p>How data moves between tools, what reporting exists today, what's missing, and what needs to be built.</p>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Zoho CRM → Power BI Pipeline</div>
+    <div class="card">
+      <div class="card-header"><h3>Postman Integration</h3></div>
+      <p>A custom API connector built in Postman bridges Zoho CRM and Power BI — the two systems don't connect natively. Zoho Analytics was evaluated but not integrated as it did not meet requirements. Postman is the solution currently in place.</p>
+      <ul style="font-size:13px; color:var(--text-secondary); margin: 10px 0 10px 18px; line-height:1.9;">
+        <li>Mateo (Director of Rep Sales) runs the Postman collection twice a week to pull updated data from Zoho into Power BI</li>
+        <li>Marketing coordinator holds a backup Postman account in case Mateo is unavailable and data needs to be pulled</li>
+        <li>Do not make structural changes to Zoho CRM fields without checking with Mateo — changes can break the pipeline</li>
+      </ul>
+      <div class="tool-expand-meta" style="margin-top:8px;">
+        <span>Primary operator: Mateo</span>
+        <span>Backup: Marketing Coordinator</span>
+        <span>Cadence: Twice weekly</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>Power BI — Sales Reporting</h3></div>
+      <p>Power BI is used exclusively for sales reporting — account performance, rep firm performance, and pipeline visibility. It is a sales tool, not a marketing tool. Primary audience is Mateo and the sales team. Christine does not have access.</p>
+      <p style="margin-top:10px;">Key reason it exists: Zoho CRM's native reporting cannot filter by account name, which is critical for how the sales team reviews pipeline data. Power BI solves that gap.</p>
+      <div class="tool-expand-meta" style="margin-top:10px;">
+        <span>Owner: Mateo</span>
+        <span>Audience: Sales team</span>
+        <span>Access: Sales only — Christine excluded</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Zapier Automations</div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>✅ Active — Business Card Order Notification</h3>
+        <span class="tag tag-done">Live</span>
+      </div>
+      <p>The only fully active Zap. Triggers when a new row is added to the Business Card Orders SharePoint spreadsheet and sends a notification to the marketing coordinator via Microsoft Teams. Works reliably but the underlying process (spreadsheet-based ordering) is worth improving. See Ideas tab.</p>
+      <div class="tool-expand-meta" style="margin-top:10px;">
+        <span>Trigger: New row in SharePoint spreadsheet</span>
+        <span>Action: Teams notification to coordinator</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>🚧 Draft — Lunch & Learn Leads → Mailchimp</h3>
+        <span class="tag tag-pending">Draft</span>
+      </div>
+      <p>Built and tested end-to-end. Captures L&L event leads from Zoho and routes them into a Mailchimp campaign. Not yet enabled — pending a session with Heather to activate. Open question: should this be split into separate flows for Demo Unit events vs. Lunch & Learn events?</p>
+      <div class="tool-expand-meta" style="margin-top:10px;">
+        <span>Status: Built, tested, not live</span>
+        <span>Blocked on: Heather session to enable</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>🚧 Draft — Zoho Contact → Mailchimp Creation</h3>
+        <span class="tag tag-pending">Draft / Broken</span>
+      </div>
+      <p>Intended to automatically create a Mailchimp contact when a new contact is added in Zoho CRM. Kept breaking — currently requires manual intervention. Needs to be rebuilt and reconnected. Critical for rep firm contact flow to work without manual imports.</p>
+      <div class="tool-expand-meta" style="margin-top:10px;">
+        <span>Status: Broken — needs reconnection</span>
+        <span>Impact: Rep firm contacts currently imported manually</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>🚧 Draft — Subscription Status Update</h3>
+        <span class="tag tag-pending">Draft</span>
+      </div>
+      <p>Intended to update Mailchimp subscription status based on email campaign performance. Not yet built out beyond concept stage.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Marketing Performance Reporting</div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Current State — Manual Excel Tracker</h3>
+        <span class="tag tag-pending">Functional but not scalable</span>
+      </div>
+      <p>Marketing performance across Google Analytics, LinkedIn, and Mailchimp email campaigns is currently tracked manually in a single Excel spreadsheet. It has worked as a stopgap but doesn't scale and requires ongoing manual effort to maintain.</p>
+      <div class="tool-expand-meta" style="margin-top:10px;">
+        <span>Tracks: GA traffic, LinkedIn growth & engagement, email performance</span>
+        <span>Owner: Marketing Coordinator</span>
+      </div>
+      <div style="margin-top:12px;"><a href="https://mojavehvac.sharepoint.com/:x:/r/sites/mojavemarketing/_layouts/15/Doc.aspx?sourcedoc=%7B3F98D169-DCC4-4C5D-ACD5-2E05567540E5%7D&file=LinkedIn_Analytics_Tracker.xlsx&action=default&mobileredirect=true&DefaultItemOpen=1" target="_blank" style="display:inline-flex; align-items:center; gap:6px; background:var(--purple); color:white; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">📊 LinkedIn &amp; GA Analytics Tracker</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Opportunity — Unified Marketing Dashboard</h3>
+        <span class="tag tag-todo">Idea — needs scoping</span>
+      </div>
+      <p>No single place currently shows marketing performance across all three channels. The goal is to aggregate Google Analytics, LinkedIn analytics, and Mailchimp campaign data into one view — ideally connected to Power BI or a lightweight alternative. This would replace the manual Excel tracker and give true visibility into what's working.</p>
+      <p style="margin-top:10px;">See Ideas & Unfinished Projects tab for full context.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Lead Scoring & Lifecycle</div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Current State</h3>
+      </div>
+      <p>No formal lead scoring or lifecycle tracking exists today. Contacts enter Zoho and move forward based on RSM activity, not a defined scoring model. This is a meaningful gap for an HVAC manufacturer where the sales cycle is long and stakeholder types vary significantly.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Proposed Framework</h3>
+        <span class="tag tag-todo">To be defined</span>
+      </div>
+      <p><strong>Fit signals</strong> — who they are:</p>
+      <ul style="font-size:13px; color:var(--text-secondary); margin: 8px 0 12px 18px; line-height:1.9;">
+        <li>Contact type: engineer/specifier > facility manager > distributor > unknown</li>
+        <li>Vertical: healthcare, grocery, education score highest (strongest ArctiDry fit)</li>
+        <li>Territory: covered by an active RSM</li>
+      </ul>
+      <p><strong>Intent signals</strong> — what they've done:</p>
+      <ul style="font-size:13px; color:var(--text-secondary); margin: 8px 0 12px 18px; line-height:1.9;">
+        <li>Attended a Lunch & Learn or demo unit event</li>
+        <li>Downloaded a spec sheet or guide</li>
+        <li>Filled out the rep locator form</li>
+        <li>Opened or clicked email campaigns</li>
+        <li>Requested a demo unit</li>
+      </ul>
+      <p><strong>Proposed lifecycle stages:</strong></p>
+      <ul style="font-size:13px; color:var(--text-secondary); margin: 8px 0 10px 18px; line-height:1.9;">
+        <li>Cold → Engaged → MQL → Handed to RSM → Active Opportunity → Customer</li>
+      </ul>
+      <div class="sage-band" style="margin-bottom:0;">⚠️ The infrastructure challenge: fit and intent signals currently live in separate tools — Mailchimp has email behavior, the website has form fills, Zoho has contact records. Nothing connects them today. Lead scoring requires solving that data unification problem first.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ IDEAS ══ -->
+<!-- ══ DATA FLOW ══ -->
+<div id="dataflow" class="tab-panel">
+  <div class="page-header">
+    <div class="page-eyebrow">Architecture</div>
+    <h1>Data Flow</h1>
+    <p>How data moves across the Mojave marketing stack — from contact sources through Zoho, into Mailchimp, Power BI, and the website.</p>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Overview</div>
+    <div class="card">
+      <div class="card-header"><h3>How to Read This</h3></div>
+      <p>Every contact that enters the Mojave marketing ecosystem passes through the marketing coordinator first. Nothing reaches Mailchimp, Power BI, or the website without being verified and formatted upstream. The diagram below maps the full flow.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Flow Diagram</div>
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:10px; padding:16px 20px;">
+
+      <style>
+      #proc-bar { display:flex; gap:6px; flex-wrap:wrap; padding:8px 0 8px; }
+      .pbtn { font-size:11px; font-weight:500; padding:5px 12px; border-radius:20px; border:0.5px solid var(--border); background:var(--white); color:var(--text-muted); cursor:pointer; transition:all 0.15s; }
+      .pbtn.active { background:#534AB7; color:#fff; border-color:#3C3489; }
+      #link-legend { display:flex; gap:16px; flex-wrap:wrap; font-size:11px; color:var(--text-muted); padding:4px 0 6px; }
+      </style>
+
+      <div id="proc-bar">
+        <button class="pbtn active" onclick="setProc('all')">All</button>
+        <button class="pbtn" onclick="setProc('intake')">Contact Intake</button>
+        <button class="pbtn" onclick="setProc('email')">Email & Campaigns</button>
+        <button class="pbtn" onclick="setProc('reporting')">Sales Reporting</button>
+        <button class="pbtn" onclick="setProc('linkedin')">LinkedIn & Content</button>
+        <button class="pbtn" onclick="setProc('website')">Website Updates</button>
+        <button class="pbtn" onclick="setProc('repfirm')">Rep Firm Onboarding</button>
+        <button class="pbtn" onclick="setProc('bizcards')">Business Cards</button>
+      </div>
+
+      <div id="link-legend">
+        <span><svg width="36" height="12" style="vertical-align:middle;margin-right:4px"><line x1="0" y1="6" x2="28" y2="6" stroke="#1D9E75" stroke-width="2"/><polygon points="28,3 36,6 28,9" fill="#1D9E75"/></svg>Automated</span>
+        <span><svg width="36" height="12" style="vertical-align:middle;margin-right:4px"><line x1="0" y1="6" x2="28" y2="6" stroke="#7F77DD" stroke-width="2" stroke-dasharray="5 3"/><polygon points="28,3 36,6 28,9" fill="#7F77DD"/></svg>Manual / human in loop</span>
+        <span><svg width="36" height="12" style="vertical-align:middle;margin-right:4px"><line x1="0" y1="6" x2="28" y2="6" stroke="#D85A30" stroke-width="2" stroke-dasharray="2 3"/><polygon points="28,3 36,6 28,9" fill="#D85A30"/></svg>Broken / opportunity</span>
+      </div>
+
+      <div style="display:flex; gap:16px; flex-wrap:wrap; font-size:11px; color:var(--text-muted); padding:4px 0 6px;">
+        <span><svg width="12" height="12" style="vertical-align:middle;margin-right:5px"><circle cx="6" cy="6" r="6" fill="#7C499F"/></svg>People</span>
+        <span><svg width="12" height="12" style="vertical-align:middle;margin-right:5px"><circle cx="6" cy="6" r="6" fill="#4B4760"/></svg>Tools</span>
+        <span><svg width="12" height="12" style="vertical-align:middle;margin-right:5px"><circle cx="6" cy="6" r="6" fill="#A8BC6A"/></svg>Sources</span>
+        <span><svg width="12" height="12" style="vertical-align:middle;margin-right:5px"><circle cx="6" cy="6" r="6" fill="#9B6BB8"/></svg>Outputs</span>
+      </div>
+
+      <div style="display:flex; gap:20px; flex-wrap:wrap; padding-bottom:8px;">
+        <span style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:6px;">
+          <svg width="16" height="16"><circle cx="8" cy="8" r="7" fill="none" stroke="#F0A830" stroke-width="2" stroke-dasharray="4 2"/><circle cx="8" cy="8" r="3" fill="#F0A830"/></svg>Process start
+        </span>
+        <span style="font-size:11px;color:var(--text-muted);">Drag any node to rearrange</span>
+      </div>
+
+      <canvas id="net4" style="width:100%;display:block;border-radius:8px;touch-action:none;"></canvas>
+
+      <div id="tt4" style="display:none;position:absolute;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-size:12px;max-width:240px;pointer-events:none;z-index:10;">
+        <p id="tt4-name" style="font-weight:600;margin:0 0 2px;color:var(--text-primary);font-size:13px;"></p>
+        <p id="tt4-role" style="margin:0 0 6px;font-size:11px;color:#7C499F;font-weight:600;"></p>
+        <p id="tt4-desc" style="margin:0;color:var(--text-secondary);line-height:1.5;"></p>
+      </div>
+
+      <script>
+      const NODES = [
+        { id:'coordinator', label:'Marketing\nCoordinator', title:'Marketing Coordinator', type:'person', x:.50, y:.46, r:38, desc:'Central gatekeeper. All contacts and most content passes through here before entering any tool.' },
+        { id:'dirrepsales',  label:'Dir. of\nRep Sales',    title:'Director of Rep Sales',  type:'person', x:.20, y:.26, r:28, desc:'Oversees all U.S. and LATAM rep partnerships. Runs Postman twice weekly. Collaborates on CRM and selector tool.' },
+        { id:'creative',     label:'Creative &\nEmail',      title:'Creative & Email',       type:'person', x:.82, y:.26, r:26, desc:'Owns Mailchimp execution. Receives approved contacts. Creates visual assets in Canva.' },
+        { id:'prcopy',       label:'PR &\nCopy',             title:'PR & Copy',              type:'person', x:.84, y:.56, r:24, desc:'Writes rep firm announcement copy and press releases. Reviews all LinkedIn posts.' },
+        { id:'webdev',       label:'Web\nDeveloper',         title:'Web Developer',          type:'person', x:.18, y:.64, r:24, desc:'Implements structural changes to mojavehvac.com.' },
+        { id:'rsms',         label:'Regional\nSales Mgrs',   title:'Regional Sales Managers',type:'person', x:.50, y:.10, r:22, desc:'Provide rep firm contacts, office locations, and field content.' },
+        { id:'dirops',       label:'Dir. of\nOperations',    title:'Director of Operations', type:'person', x:.72, y:.74, r:22, desc:'Provides training dates monthly. Automation project underway.' },
+        { id:'zoho',         label:'Zoho CRM',               title:'Zoho CRM',               type:'tool',   x:.50, y:.64, r:32, desc:'Central CRM. All contacts must be verified and tagged before entering.' },
+        { id:'zapier',       label:'Zapier',                 title:'Zapier',                 type:'tool',   x:.34, y:.79, r:24, desc:'Automates Zoho → Mailchimp. L&L flow tested. Rep firm Zap broken.' },
+        { id:'mailchimp',    label:'Mailchimp',              title:'Mailchimp',              type:'tool',   x:.16, y:.90, r:26, desc:'Email platform. Owned by Creative lead. Fed by Zapier and manual handoff.' },
+        { id:'powerbi',      label:'Power BI',               title:'Power BI',               type:'tool',   x:.22, y:.46, r:24, desc:'Sales dashboards. Owned by Dir. of Rep Sales. Fed by Postman twice weekly.' },
+        { id:'postman',      label:'Postman',                title:'Postman',                type:'tool',   x:.28, y:.34, r:20, desc:'API connector. Dir. of Rep Sales runs twice weekly Zoho → Power BI.' },
+        { id:'canva',        label:'Canva',                  title:'Canva',                  type:'tool',   x:.72, y:.42, r:22, desc:'Design for LinkedIn graphics, PDFs, business cards.' },
+        { id:'hovercode',    label:'Hovercode',              title:'Hovercode',              type:'tool',   x:.66, y:.88, r:20, desc:'Dynamic QR codes for business cards, events, collateral.' },
+        { id:'wpengine',     label:'WP Engine',              title:'WP Engine',              type:'tool',   x:.10, y:.76, r:20, desc:'Hosts mojavehvac.com. Coordinator manages PDF redirects here.' },
+        { id:'wpadmin',      label:'WP Admin',               title:'WP Admin',               type:'tool',   x:.10, y:.54, r:22, desc:'WordPress backend. Pages, media, rep locator, partner pages.' },
+        { id:'teams',        label:'MS Teams',               title:'MS Teams',               type:'tool',   x:.64, y:.58, r:20, desc:'Units in the Wild channel. Zapier sends biz card notifications here.' },
+        { id:'linkedin',     label:'LinkedIn',               title:'LinkedIn',               type:'tool',   x:.84, y:.42, r:24, desc:'Company page. 2–3x/week. Grown from 1.5k to 4.7k followers.' },
+        { id:'bizcardord',   label:'Biz Card\nOrders',       title:'Biz Card Orders',        type:'source', x:.50, y:.90, r:20, desc:'SharePoint spreadsheet. Zapier notifies coordinator via Teams.' },
+        { id:'repcsv',       label:'Rep Firm\nContacts',     title:'Rep Firm Contacts',      type:'source', x:.74, y:.10, r:20, desc:'New rep contacts as CSVs, PDFs, spreadsheets. Manually imported to Zoho.' },
+        { id:'webforms',     label:'Website\nForms',         title:'Website Forms',          type:'source', x:.26, y:.10, r:20, desc:'L&L, training, rep locator leads. Auto-flow into Zoho CRM.' },
+        { id:'selector',     label:'Selector\nTool',         title:'Selector Tool',          type:'source', x:.50, y:.01, r:18, desc:'Dumps to spreadsheet. RSMs manually create Zoho opportunities. Automation in progress.' },
+        { id:'events',       label:'Events /\nL&L',          title:'Events & L&L',           type:'source', x:.76, y:.01, r:18, desc:'Trade shows and Lunch & Learn. Leads via forms or business cards.' },
+        { id:'emailout',     label:'Email\nCampaigns',       title:'Email Campaigns',        type:'output', x:.04, y:.90, r:18, desc:'Outbound campaigns executed by Creative lead in Mailchimp.' },
+        { id:'salesrep',     label:'Sales\nReporting',       title:'Sales Reporting',        type:'output', x:.04, y:.42, r:18, desc:'Power BI dashboards. Filters by account — key gap Zoho Analytics cannot fill.' },
+        { id:'websiteout',   label:'mojavehvac\n.com',       title:'mojavehvac.com',         type:'output', x:.04, y:.62, r:18, desc:'Public website. Partner pages, rep locator, press, forms.' },
+        { id:'liout',        label:'LinkedIn\nPosts',        title:'LinkedIn Posts',         type:'output', x:.96, y:.42, r:18, desc:'Published posts: thought leadership, product, applications, events, rep announcements.' },
+      ];
+
+      const ALL_EDGES = [
+        { a:'webforms',    b:'zoho',         type:'auto',   procs:['intake','email'] },
+        { a:'repcsv',      b:'coordinator',  type:'manual', procs:['intake','repfirm'] },
+        { a:'events',      b:'coordinator',  type:'manual', procs:['intake'] },
+        { a:'selector',    b:'rsms',         type:'manual', procs:['intake'] },
+        { a:'selector',    b:'zoho',         type:'broken', procs:['intake'] },
+        { a:'rsms',        b:'coordinator',  type:'manual', procs:['intake','repfirm'] },
+        { a:'rsms',        b:'repcsv',       type:'manual', procs:['intake','repfirm'] },
+        { a:'coordinator', b:'zoho',         type:'manual', procs:['intake','repfirm','email'] },
+        { a:'zoho',        b:'zapier',       type:'auto',   procs:['email'] },
+        { a:'zapier',      b:'mailchimp',    type:'broken', procs:['email','repfirm'] },
+        { a:'coordinator', b:'mailchimp',    type:'manual', procs:['email'] },
+        { a:'mailchimp',   b:'creative',     type:'manual', procs:['email'] },
+        { a:'creative',    b:'mailchimp',    type:'manual', procs:['email'] },
+        { a:'mailchimp',   b:'emailout',     type:'auto',   procs:['email'] },
+        { a:'zoho',        b:'postman',      type:'manual', procs:['reporting'] },
+        { a:'dirrepsales', b:'postman',      type:'manual', procs:['reporting'] },
+        { a:'postman',     b:'powerbi',      type:'auto',   procs:['reporting'] },
+        { a:'powerbi',     b:'salesrep',     type:'auto',   procs:['reporting'] },
+        { a:'coordinator', b:'linkedin',     type:'manual', procs:['linkedin','repfirm'] },
+        { a:'prcopy',      b:'coordinator',  type:'manual', procs:['linkedin','repfirm'] },
+        { a:'prcopy',      b:'linkedin',     type:'manual', procs:['linkedin'] },
+        { a:'coordinator', b:'canva',        type:'manual', procs:['linkedin','bizcards'] },
+        { a:'creative',    b:'canva',        type:'manual', procs:['linkedin'] },
+        { a:'canva',       b:'liout',        type:'manual', procs:['linkedin'] },
+        { a:'linkedin',    b:'liout',        type:'manual', procs:['linkedin'] },
+        { a:'coordinator', b:'wpadmin',      type:'manual', procs:['website','repfirm'] },
+        { a:'webdev',      b:'wpadmin',      type:'manual', procs:['website'] },
+        { a:'webdev',      b:'wpengine',     type:'manual', procs:['website'] },
+        { a:'wpengine',    b:'wpadmin',      type:'manual', procs:['website'] },
+        { a:'wpadmin',     b:'websiteout',   type:'auto',   procs:['website'] },
+        { a:'bizcardord',  b:'zapier',       type:'auto',   procs:['bizcards'] },
+        { a:'zapier',      b:'teams',        type:'auto',   procs:['bizcards'] },
+        { a:'teams',       b:'coordinator',  type:'manual', procs:['bizcards'] },
+        { a:'coordinator', b:'hovercode',    type:'manual', procs:['bizcards'] },
+        { a:'hovercode',   b:'canva',        type:'manual', procs:['bizcards'] },
+        { a:'canva',       b:'bizcardord',   type:'manual', procs:['bizcards'] },
+      ];
+
+      const PROC_START = {
+        intake:    ['webforms','events','repcsv','selector'],
+        email:     ['webforms','coordinator'],
+        reporting: ['zoho'],
+        linkedin:  ['coordinator'],
+        website:   ['coordinator'],
+        repfirm:   ['rsms'],
+        bizcards:  ['bizcardord'],
+      };
+
+      const EDGE_STYLE = {
+        auto:   { stroke:'#1D9E75', dash:[],    width:2 },
+        manual: { stroke:'#7F77DD', dash:[5,3], width:1.5 },
+        broken: { stroke:'#D85A30', dash:[2,3], width:2 },
+      };
+
+      const NODE_COLORS = {
+        person: { fill:'#7C499F', dark:'#5A3472' },
+        tool:   { fill:'#4B4760', dark:'#2D2440' },
+        source: { fill:'#A8BC6A', dark:'#6B7E2A' },
+        output: { fill:'#9B6BB8', dark:'#7C499F' },
+      };
+
+      let currentProc='all', W, H, dpr;
+      let dfNodes=[], highlighted=null, hovered=null;
+      let dragging=null, dragOffX=0, dragOffY=0, didDrag=false;
+
+      const dfCanvas=document.getElementById('net4');
+      const dfCtx=dfCanvas.getContext('2d');
+      const dfTt=document.getElementById('tt4');
+
+      function setProc(p){
+        currentProc=p; highlighted=null; dfTt.style.display='none';
+        document.querySelectorAll('.pbtn').forEach(b=>{
+          const m={all:'All',intake:'Contact Intake',email:'Email & Campaigns',reporting:'Sales Reporting',linkedin:'LinkedIn & Content',website:'Website Updates',repfirm:'Rep Firm Onboarding',bizcards:'Business Cards'};
+          b.classList.toggle('active', b.textContent.trim()===m[p]);
+        });
+        dfDraw();
+      }
+
+      function dfActiveEdges(){ return currentProc==='all'?ALL_EDGES:ALL_EDGES.filter(e=>e.procs.includes(currentProc)); }
+      function dfActiveNodeIds(){ if(currentProc==='all')return new Set(NODES.map(n=>n.id)); const s=new Set(); dfActiveEdges().forEach(e=>{s.add(e.a);s.add(e.b);}); return s; }
+      function dfIsStart(id){ return currentProc!=='all'&&(PROC_START[currentProc]||[]).includes(id); }
+      function dfGetConnected(id){ const s=new Set(); dfActiveEdges().forEach(e=>{if(e.a===id)s.add(e.b);if(e.b===id)s.add(e.a);}); return s; }
+
+      function dfDrawArrow(x1,y1,x2,y2,ra,rb,color,dash,width){
+        const dx=x2-x1,dy=y2-y1,dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist<2)return;
+        const ux=dx/dist,uy=dy/dist;
+        const sx=x1+ux*ra,sy=y1+uy*ra,ex=x2-ux*(rb+10),ey=y2-uy*(rb+10);
+        dfCtx.beginPath();dfCtx.moveTo(sx,sy);dfCtx.lineTo(ex,ey);
+        dfCtx.strokeStyle=color;dfCtx.lineWidth=width;dfCtx.setLineDash(dash);dfCtx.stroke();dfCtx.setLineDash([]);
+        const angle=Math.atan2(ey-sy,ex-sx),as=8,aa=0.45;
+        dfCtx.beginPath();dfCtx.moveTo(ex,ey);
+        dfCtx.lineTo(ex-as*Math.cos(angle-aa),ey-as*Math.sin(angle-aa));
+        dfCtx.lineTo(ex-as*Math.cos(angle+aa),ey-as*Math.sin(angle+aa));
+        dfCtx.closePath();dfCtx.fillStyle=color;dfCtx.fill();
+      }
+
+      function dfDraw(){
+        dfCtx.clearRect(0,0,W,H);
+        const ae=dfActiveEdges(),an=dfActiveNodeIds();
+        const conn=highlighted?dfGetConnected(highlighted):null;
+        const drawn=new Set();
+        ae.forEach(e=>{
+          const key=e.a+'|'+e.b+'|'+e.type;
+          if(drawn.has(key))return;drawn.add(key);
+          const na=dfNodes.find(n=>n.id===e.a),nb=dfNodes.find(n=>n.id===e.b);
+          if(!na||!nb)return;
+          const isActive=!conn||(conn.has(e.a)||conn.has(e.b));
+          const s=EDGE_STYLE[e.type];
+          dfCtx.globalAlpha=isActive?1:0.12;
+          dfDrawArrow(na.px,na.py,nb.px,nb.py,na.r,nb.r,s.stroke,s.dash,s.width);
+          dfCtx.globalAlpha=1;
+        });
+        dfNodes.forEach(n=>{
+          const active=an.has(n.id),isHigh=highlighted===n.id,isConn=conn&&conn.has(n.id);
+          const isDim=!active||(conn&&!isHigh&&!isConn);
+          const c=NODE_COLORS[n.type];
+          dfCtx.globalAlpha=isDim?0.1:1;
+          const r=n.r+(isHigh?3:0);
+          if(dfIsStart(n.id)&&active){
+            dfCtx.beginPath();dfCtx.arc(n.px,n.py,r+9,0,Math.PI*2);
+            dfCtx.strokeStyle='#F0A830';dfCtx.lineWidth=2;dfCtx.setLineDash([4,3]);dfCtx.stroke();dfCtx.setLineDash([]);
+            dfCtx.beginPath();dfCtx.arc(n.px,n.py,4,0,Math.PI*2);dfCtx.fillStyle='#F0A830';dfCtx.fill();
+          }
+          dfCtx.beginPath();dfCtx.arc(n.px,n.py,r,0,Math.PI*2);
+          dfCtx.fillStyle=(dragging&&dragging.id===n.id)||isHigh?c.dark:c.fill;dfCtx.fill();
+          if((isHigh||hovered===n.id)&&(!dragging||dragging.id!==n.id)){
+            dfCtx.beginPath();dfCtx.arc(n.px,n.py,r+4,0,Math.PI*2);
+            dfCtx.strokeStyle=c.dark;dfCtx.lineWidth=1.5;dfCtx.stroke();
+          }
+          dfCtx.globalAlpha=1;
+          if(!active&&currentProc!=='all')return;
+          const lines=n.label.split('\n'),fs=Math.max(Math.round(n.r*0.34),9);
+          dfCtx.fillStyle='#fff';dfCtx.font=`500 ${fs}px sans-serif`;
+          dfCtx.textAlign='center';dfCtx.textBaseline='middle';
+          const lh=fs+2,oy=lines.length>1?-lh/2:0;
+          lines.forEach((ln,i)=>dfCtx.fillText(ln,n.px,n.py+oy+i*lh));
+        });
+      }
+
+      function dfGetPos(e){ const r=dfCanvas.getBoundingClientRect(); if(e.touches)return{x:e.touches[0].clientX-r.left,y:e.touches[0].clientY-r.top}; return{x:e.clientX-r.left,y:e.clientY-r.top}; }
+      function dfNodeAt(x,y){ const an=dfActiveNodeIds(); return [...dfNodes].reverse().find(n=>an.has(n.id)&&Math.hypot(n.px-x,n.py-y)<=n.r+6)||null; }
+
+      dfCanvas.addEventListener('mousedown',e=>{ const {x,y}=dfGetPos(e),n=dfNodeAt(x,y); if(n){dragging=n;dragOffX=x-n.px;dragOffY=y-n.py;didDrag=false;dfCanvas.style.cursor='grabbing';} });
+      dfCanvas.addEventListener('touchstart',e=>{ const {x,y}=dfGetPos(e),n=dfNodeAt(x,y); if(n){dragging=n;dragOffX=x-n.px;dragOffY=y-n.py;didDrag=false;e.preventDefault();} },{passive:false});
+
+      function dfOnMove(e){
+        const {x,y}=dfGetPos(e);
+        if(dragging){ dragging.px=Math.max(dragging.r,Math.min(W-dragging.r,x-dragOffX)); dragging.py=Math.max(dragging.r,Math.min(H-dragging.r,y-dragOffY)); didDrag=true; dfTt.style.display='none'; dfDraw(); return; }
+        const n=dfNodeAt(x,y),an=dfActiveNodeIds();
+        hovered=n&&an.has(n.id)?n.id:null;
+        dfCanvas.style.cursor=hovered?'pointer':'default';
+        dfDraw();
+      }
+      dfCanvas.addEventListener('mousemove',dfOnMove);
+      dfCanvas.addEventListener('touchmove',e=>{dfOnMove(e);e.preventDefault();},{passive:false});
+
+      function dfOnUp(e){
+        if(dragging&&!didDrag){
+          const n=dragging;
+          highlighted=highlighted===n.id?null:n.id;
+          if(highlighted){
+            dfTt.style.display='block';
+            document.getElementById('tt4-name').textContent=n.title;
+            const tm={person:'Role',tool:'Tool',source:'Data source',output:'Output'};
+            document.getElementById('tt4-role').textContent=tm[n.type]||'';
+            document.getElementById('tt4-desc').textContent=n.desc;
+            const r=dfCanvas.getBoundingClientRect();
+            const cx=(e.clientX||e.changedTouches?.[0]?.clientX||n.px+r.left)-r.left;
+            const cy=(e.clientY||e.changedTouches?.[0]?.clientY||n.py+r.top)-r.top;
+            dfTt.style.left=Math.min(cx+14,W-250)+'px';
+            dfTt.style.top=Math.max(cy-80,8)+'px';
+          } else { dfTt.style.display='none'; }
+        }
+        dragging=null; dfCanvas.style.cursor=hovered?'pointer':'default'; dfDraw();
+      }
+      dfCanvas.addEventListener('mouseup',dfOnUp);
+      dfCanvas.addEventListener('touchend',dfOnUp);
+      dfCanvas.addEventListener('mouseleave',()=>{ if(!dragging){hovered=null;dfDraw();} });
+
+      function dfResize(){
+        dpr=window.devicePixelRatio||1;
+        W=dfCanvas.offsetWidth; H=Math.round(W*0.78);
+        dfCanvas.width=W*dpr; dfCanvas.height=H*dpr;
+        dfCanvas.style.height=H+'px';
+        dfCtx.scale(dpr,dpr);
+        dfNodes=NODES.map(n=>({...n,px:n.x*W,py:n.y*H,r:Math.max(n.r*(W/680),13)}));
+        dfDraw();
+      }
+      window.addEventListener('resize',dfResize);
+      dfResize();
+      </script>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Key Principles</div>
+    <div class="card">
+      <div class="card-header"><h3>Marketing Coordinator is the Single Gatekeeper</h3></div>
+      <p>All contact data — from events, business cards, rep firm CSVs, or website forms — flows through the marketing coordinator before entering any system. The three fields that must always be set: Mailchimp segment, language preference, and contact type.</p>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>Two Parallel Pipelines</h3></div>
+      <p>Zoho feeds two separate downstream systems that don't talk to each other directly. Mailchimp receives contact and campaign data via Zapier (and manual handoff in the interim). Power BI receives sales data via the Postman pipeline Mateo runs twice a week.</p>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>Automation is Partial, Not Complete</h3></div>
+      <p>The Zapier Zoho → Mailchimp automation exists but is not fully live. Until it is, contacts are also passed to Heather manually. Do not assume automation is handling everything — confirm with the marketing coordinator before making changes to either flow.</p>
+    </div>
+  </div>
+</div>
+
+<div id="ideas" class="tab-panel">
+  <div class="page-header">
+    <div class="page-eyebrow">Backlog</div>
+    <h1>Ideas & Unfinished Projects</h1>
+    <p>Every idea and unfinished project from across all tabs, aggregated here. Context is included so nothing gets lost in the transition.</p>
+  </div>
+
+  <div class="notice" style="border-left-color: var(--purple); background: var(--lavender-pale);">
+    Ideas live in their source tabs with full context. This tab is the master list — organized by category so you can see everything in one place.
+  </div>
+
+  <div class="section">
+    <div class="section-label">LinkedIn & Content</div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>🤖 AI Agent 1 — Industry News Sourcing</h3>
+        <span class="tag tag-todo">Personal Project</span>
+      </div>
+      <p>An AI agent that sources industry-related news and trending HVAC, energy efficiency, and climate tech topics. Would surface timely content angles so thought leadership posts can tap into what people are already talking about. See LinkedIn tab for full context.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>🤖 AI Agent 2 — Influencer & Competitor Monitoring</h3>
+        <span class="tag tag-todo">Personal Project</span>
+      </div>
+      <p>An AI agent that monitors content from relevant influencers, competitors, and partners on LinkedIn. Would surface posts worth engaging with, resharing, or responding to — turning passive scrolling into an active engagement strategy. See LinkedIn tab for full context.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>📸 Units in the Wild — Activate as Content Source</h3>
+        <span class="tag tag-pending">Active channel, underutilized</span>
+      </div>
+      <p>A Microsoft Teams channel where RSMs and Justin (Director of Operations) post field and install photos. Great content source for product and events posts that isn't being consistently pulled from. Build a habit of checking it before drafting install or field content.</p>
+      <div style="margin-top:12px;">
+        <a href="https://teams.microsoft.com/l/channel/19%3A8f829fdbb3704758b6b0167244de1df1%40thread.tacv2/Units%20and%20Sales%20in%20the%20Wild?groupId=a59c4ea7-71f3-4466-b970-b54f74f97503&tenantId=3106699f-63c0-4091-9eae-2b7b85661b86" target="_blank" style="display:inline-flex; align-items:center; gap:6px; background:var(--purple); color:white; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">💬 Units and Sales in the Wild</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>🏗️ Basis of Design Content — Engineering Pillar</h3>
+        <span class="tag tag-todo">New direction from sales</span>
+      </div>
+      <p>Engineering-specific content targeting specifiers, MEP consultants, and engineers. Technical depth — how and why ArctiDry is designed the way it is, spec-level detail, ASHRAE, ISMRE, dew point. Link to basis of design resource to be shared. A distinct pillar from applications — different audience, different voice.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>📰 Engineer-Targeted Newsletter</h3>
+        <span class="tag tag-todo">To be built</span>
+      </div>
+      <p>A newsletter for engineers and specifiers sourced from events and the selector tool. Content anchored in basis of design, thought leadership, industry trends, and Mojave technical content. Requires its own Mailchimp segment and content cadence. Basis of design is a priority signal from sales — should anchor the first issues. See CRM & MAPS tab for full context.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>🏢 Parent / Child Company Structure — Claude-Assisted Attribution</h3>
+        <span class="tag tag-pending">Low priority</span>
+      </div>
+      <p>Zoho CRM currently has no distinction between parent rep firm companies and individual office locations. Goal is to build that hierarchy. With Claude in the stack, the opportunity is to feed the contact list to an LLM to scrape the web and make educated guesses on office attribution — significantly faster than manual research. See CRM & MAPS tab for full context.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>📷 More Demo Unit, Lunch & Learn, and Install Content</h3>
+        <span class="tag tag-todo">Todo</span>
+      </div>
+      <p>These are underleveraged content types. Demo units, L&L events, and real installs are proof points that build credibility. Units in the Wild channel is the primary source. Build a repeatable format for each content type so it's easy to post consistently.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Automation & Integrations</div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>⚡ Enable Lunch & Learn Zapier Flow with Heather</h3>
+        <span class="tag tag-pending">Built & tested, not yet live</span>
+      </div>
+      <p>The Zoho → Mailchimp Zapier automation for Lunch & Learn leads has been built and tested end-to-end. The plan is for Mailchimp to trigger an automated follow-up email campaign once a lead is captured. Next step is to reconnect with Heather to enable it. Blocked on scheduling that meeting. See Zapier and CRM & MAPS tabs for full context.</p>
+      <div style="margin-top:12px;">
+        <a href="https://mojavehvac.sharepoint.com/:w:/r/sites/mojavemarketing/Shared%20Documents/05_Sales%20%26%20Enablement/Lunch%20%26%20Learn/Lunch%20and%20Learn%20-%20Autometed%20Follow%20Up%20Email%20Drafts.docx?d=w1572888542424b83af8147b405f80b17&csf=1&web=1&e=90nY2T" target="_blank" style="display:inline-flex; align-items:center; gap:6px; background:var(--purple); color:white; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">📄 L&L Automated Follow-Up Email Drafts</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>⚡ Reconnect Zoho → Mailchimp Contact Creation Zap</h3>
+        <span class="tag tag-todo">Todo</span>
+      </div>
+      <p>The Zap that automatically creates Mailchimp contacts when a rep firm contact is added in Zoho needs to be reconnected. Currently, this flow requires manual intervention. Fixing it removes a recurring task and ensures no contacts slip through. See Zapier tab for full context.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>🔧 Selector Tool → Zoho Lead Automation (Mateo)</h3>
+        <span class="tag tag-todo">In exploration</span>
+      </div>
+      <p>The Mojave selector tool currently dumps all captured lead data into a spreadsheet. RSMs then manually pull from it and create opportunities in Zoho CRM. This is a significant manual bottleneck. The goal is to automate the flow so selector tool submissions create Zoho opportunities directly, removing the RSM's manual entry step. Coordinate with Mateo — he owns the rep sales context and will know what opportunity fields and assignment logic need to be built in.</p>
+      <div style="margin-top:12px;">
+        <a href="https://mojavehvac.sharepoint.com/:w:/r/sites/mojavemarketing/_layouts/15/Doc.aspx?sourcedoc=%7B5E153B21-504D-4ECD-9E5C-6F00C2669D66%7D&file=Selection%20to%20Opportunity%20Automation.docx&action=default&mobileredirect=true&DefaultItemOpen=1" target="_blank" style="display:inline-flex; align-items:center; gap:6px; background:var(--purple); color:white; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">📄 Selection to Opportunity Automation</a>
+      </div>
+      <div class="tool-expand-meta" style="margin-top:10px;">
+        <span>Current state: Spreadsheet → manual Zoho entry by RSM</span>
+        <span>Target state: Selector tool → Zoho opportunity (automated)</span>
+        <span>Key stakeholder: Mateo</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>🎓 Training Operations Automation (Justin)</h3>
+        <span class="tag tag-todo">In exploration</span>
+      </div>
+      <p>Justin (Director of Operations) runs training sessions. The current process is largely manual and touches marketing in a few ways: the marketing coordinator updates the training sign-up page and form on the website with new dates every month, and has a recurring reminder to chase Justin for those dates. The automation goal is to reduce the load on Justin and remove the monthly manual update cycle. Potential automation targets:</p>
+      <ul style="font-size:13px; color:var(--text-secondary); margin: 10px 0 10px 18px; line-height:1.9;">
+        <li>Capture training registrations automatically</li>
+        <li>Send calendar invites to registrants</li>
+        <li>Distribute quizzes and follow-up materials</li>
+        <li>Auto-update the website form with new dates when Justin submits them</li>
+      </ul>
+      <div style="margin-top:12px;">
+        <a href="https://mojavehvac-my.sharepoint.com/:w:/p/j_ossa/IQAOPx4Rx-QyT7mEdrQe-MFaAY-RiDWCOZe3fn3PK9E0YJc?e=wbdgxv" target="_blank" style="display:inline-flex; align-items:center; gap:6px; background:var(--purple); color:white; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">📄 Automating Technical Training Process</a>
+      </div>
+      <div class="tool-expand-meta" style="margin-top:12px;">
+        <span>Current: Monthly manual website update + date-chasing reminder</span>
+        <span>Key stakeholder: Justin</span>
+        <span>Also touches: WP Admin, website forms, Zoho</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Reporting</div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>📊 Unified Marketing Dashboard</h3>
+        <span class="tag tag-todo">Needs scoping</span>
+      </div>
+      <p>No single view currently shows marketing performance across Google Analytics, LinkedIn, and Mailchimp. Goal is to aggregate all three into one dashboard — ideally connected to Power BI or a lightweight alternative. Would replace the manual Excel tracker. Data unification across tools is the core challenge to solve first.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>🎯 Lead Scoring & Lifecycle Model</h3>
+        <span class="tag tag-todo">Framework drafted — needs implementation</span>
+      </div>
+      <p>No formal lead scoring exists. Proposed model uses fit signals (contact type, vertical, territory) and intent signals (L&L attendance, spec downloads, form fills, email engagement) across a Cold → Engaged → MQL → RSM → Opportunity → Customer lifecycle. Requires data unification across Mailchimp, website, and Zoho before it can be implemented. See Reporting tab for full framework.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>📋 Business Card Order Process Improvement</h3>
+        <span class="tag tag-todo">Needs better solution</span>
+      </div>
+      <p>Current process relies on a SharePoint spreadsheet with a Zapier notification. A better solution — such as a Claude-built form artifact or a simple intake form — would be cleaner and more reliable. Worth exploring as a quick win.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>📈 Power BI — Document Active Dashboards</h3>
+        <span class="tag tag-todo">Todo</span>
+      </div>
+      <p>No formal documentation exists for what the Power BI dashboards show, who uses them, or what to do when data looks wrong. Coordinate with Mateo to document the dashboard inventory.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>⚡ Zapier Automation — Rebuild Rep Firm Contact Zap</h3>
+        <span class="tag tag-todo">Todo</span>
+      </div>
+      <p>The Zoho → Mailchimp contact creation Zap kept breaking and is currently inactive. Needs to be rebuilt and reconnected. Critical for removing manual rep firm contact imports.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Tools</div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>☁️ Marketing OneDrive — Revisit Cleanup</h3>
+        <span class="tag tag-pending">Started, not finished</span>
+      </div>
+      <p>Initial cleanup was started and a navigation/folder structure document exists. Worth revisiting and building on. Caution: do not move files between folders without confirming no one has shared direct links to them — moving breaks access. See Tools tab.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>🔗 Zoho CRM — Ongoing Data Structure Improvement</h3>
+        <span class="tag tag-pending">In progress</span>
+      </div>
+      <p>Significant cleanup has been done but the data structure still has quirks. Ongoing work with Mateo to enforce CRM best practices. Custom fields for Mailchimp segmentation exist and are critical to the Zapier automation working correctly. Do not make structural changes without asking first. See CRM & MAPS tab.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>🧩 Agree on a Full CRM Data Framework</h3>
+        <span class="tag tag-todo">Open decision</span>
+      </div>
+      <p>Before investing hours in CRM cleanup, align on a full data framework first — account/contact/lead structure, required fields per stage, naming conventions, and parent/child hierarchy enforcement. A defined framework prevents piecemeal cleanup that has to be redone. Decision to align on with the new marketing lead and sales. See CRM & MAPS tab.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Parked</div>
+    <div class="card">
+      <div class="card-header">
+        <h3>👤 Employee Spotlights</h3>
+      </div>
+      <p>Tested on LinkedIn — not a consistent priority. Worth revisiting if bandwidth allows but not a focus pillar. Parked for now.</p>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <h3>🗓️ Holiday Posts</h3>
+      </div>
+      <p>Tested on LinkedIn — low strategic value relative to effort. Parked for now unless tied to a broader campaign.</p>
+    </div>
+  </div>
+
+</div>
+
+</div><!-- /content -->
+
+<script>
+  function switchTab(id, el) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    el.classList.add('active');
+    if (id === 'dataflow' && typeof dfResize === 'function') {
+      setTimeout(dfResize, 50);
+    }
+  }
+
+  function toggleTool(id) {
+    const expand  = document.getElementById('expand-'  + id);
+    const chevron = document.getElementById('chevron-' + id);
+    const isOpen  = expand.classList.contains('open');
+    expand.classList.toggle('open', !isOpen);
+    chevron.classList.toggle('open', !isOpen);
+  }
+</script>
+</body>
+</html>

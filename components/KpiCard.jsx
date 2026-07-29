@@ -15,9 +15,9 @@ export default function KpiCard({ label, value, format = "number", benchmark }) 
     if (Math.abs(diff) < 0.001) {
       pill = <span className="pill neutral">At benchmark</span>;
     } else if (diff > 0) {
-      pill = <span className="pill good">+{diffPct} pts vs. benchmark</span>;
+      pill = <span className="pill good">+{diffPct} pts</span>;
     } else {
-      pill = <span className="pill bad">{diffPct} pts vs. benchmark</span>;
+      pill = <span className="pill bad">{diffPct} pts</span>;
     }
   }
 

@@ -28,6 +28,22 @@ function bucketOpens(emailActivity) {
   return Object.entries(buckets).map(([bucket, count]) => ({ bucket, count }));
 }
 
+function buildContactList(emailActivity) {
+  return emailActivity
+    .map((member) => {
+      const acts = member.activity || [];
+      const opens = acts.filter((a) => a.action === "open").length;
+      const clicks = acts.filter((a) => a.action === "click").length;
+      if (opens === 0 && clicks === 0) return null;
+      const latest = acts.reduce((max, a) =>
+        new Date(a.timestamp) > new Date(max) ? a.timestamp : max, acts[0].timestamp
+      );
+      return { email: member.email_address, opens, clicks, lastActive: latest };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.opens - a.opens || b.clicks - a.clicks);
+}
+
 function findHighOpenNoClick(emailActivity, minOpens = 5) {
   return emailActivity.filter((member) => {
     const acts = member.activity || [];
@@ -181,6 +197,7 @@ export async function GET(request, { params }) {
         .slice(0, 10)
         .map((l) => ({ url: l.url, clicks: l.total_clicks, uniqueClicks: l.unique_clicks })),
       takeaways,
+      contacts: buildContactList(emailActivity),
       recipientCountFromActivity: emailActivity.length,
     });
   } catch (err) {

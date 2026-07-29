@@ -16,7 +16,6 @@ export async function POST(request) {
   }
 
   const token = await createToken(secret);
-
   const res = NextResponse.json({ ok: true });
   res.cookies.set("__session", token, {
     httpOnly: true,

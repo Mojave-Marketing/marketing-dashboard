@@ -21,18 +21,25 @@ export default function TopLinksCard({ links }) {
         <thead>
           <tr>
             <th>Link</th>
-            <th>Clicks</th>
-            <th>Share</th>
+            <th style={{ textAlign: "right" }}>Clicks</th>
+            <th style={{ textAlign: "right" }}>Share</th>
           </tr>
         </thead>
         <tbody>
-          {links.map((l, i) => (
-            <tr key={i}>
-              <td>{l.url}</td>
-              <td>{l.clicks}</td>
-              <td>{totalClicks > 0 ? `${((l.clicks / totalClicks) * 100).toFixed(0)}%` : "—"}</td>
-            </tr>
-          ))}
+          {links.map((l, i) => {
+            let display = l.url;
+            try {
+              const u = new URL(l.url);
+              display = (u.pathname === "/" ? u.hostname : u.pathname).replace(/\/$/, "");
+            } catch {}
+            return (
+              <tr key={i}>
+                <td className="links-table-url" title={l.url}>{display}</td>
+                <td style={{ textAlign: "right" }}>{l.clicks}</td>
+                <td style={{ textAlign: "right" }}>{totalClicks > 0 ? `${((l.clicks / totalClicks) * 100).toFixed(0)}%` : "—"}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
