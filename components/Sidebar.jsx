@@ -15,8 +15,8 @@ function buildNav(forms) {
       id: "emails",
       title: "Marketing Emails",
       items: [
-        { label: "Campaign", href: "/emails" },
         { label: "Trends & Baseline", href: "/emails/trends" },
+        { label: "Campaigns", href: "/emails" },
       ],
     },
     {

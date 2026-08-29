@@ -101,6 +101,7 @@ every request. There is no role distinction and no admin-only routing.
 | `BLOB_READ_WRITE_TOKEN` | Yes (Surveys) | Vercel Blob token for survey response storage |
 | `WEBHOOK_SECRET` | Yes (Surveys) | Shared secret to authenticate Zapier webhook POSTs |
 | `WEBHOOK_FORMS` | No | JSON array override: `[{id, name}]` for survey nav items |
+| `BUFFER_API` | Yes (LinkedIn) | Buffer personal access token — used to pull LinkedIn post analytics |
 
 If a section's required env vars are missing, that nav section must be **hidden from the
 sidebar** and its route must return a 404 or redirect — not crash.

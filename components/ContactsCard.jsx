@@ -125,10 +125,6 @@ export default function ContactsCard({ contacts = [] }) {
           )}
         </>
       )}
-
-      <p className="contacts-note">
-        Company and name data can be added by enriching against your Mailchimp audience list.
-      </p>
     </div>
   );
 }

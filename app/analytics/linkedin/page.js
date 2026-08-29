@@ -1,14 +1,15 @@
-import ComingSoon from "../../../components/ComingSoon";
+import LinkedInView from "../../../components/LinkedInView";
 
 export const metadata = { title: "LinkedIn Analytics | Marketing Command Center" };
 
 export default function LinkedInAnalyticsPage() {
   return (
     <div className="page">
-      <ComingSoon
-        title="LinkedIn Analytics"
-        description="Follower growth, post impressions, and engagement rate for Mojave's LinkedIn company page — sourced from exported LinkedIn reports."
-      />
+      <div className="page-header">
+        <h1 className="page-title">LinkedIn Analytics</h1>
+        <p className="page-subtitle">Post performance and engagement sourced from Buffer</p>
+      </div>
+      <LinkedInView />
     </div>
   );
 }

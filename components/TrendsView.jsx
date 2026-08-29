@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Takeaways from "./Takeaways";
 import {
   LineChart,
   Line,
@@ -127,6 +128,10 @@ export default function TrendsView() {
 
   return (
     <>
+      {data.takeaways && data.takeaways.length > 0 && (
+        <Takeaways takeaways={data.takeaways} />
+      )}
+
       <div className="kpi-grid" style={{ marginBottom: "24px" }}>
         <div className="card">
           <div className="kpi-label">Sends analyzed</div>

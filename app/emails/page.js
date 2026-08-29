@@ -5,7 +5,6 @@ import KpiCard from "../../components/KpiCard";
 import FunnelChartCard from "../../components/FunnelChartCard";
 import EngagementDepthChartCard from "../../components/EngagementDepthChartCard";
 import TopLinksCard from "../../components/TopLinksCard";
-import Takeaways from "../../components/Takeaways";
 import ContactsCard from "../../components/ContactsCard";
 
 export default function CampaignPage() {
@@ -99,8 +98,6 @@ export default function CampaignPage() {
                 <EngagementDepthChartCard data={detail.engagementBuckets} />
                 <TopLinksCard links={detail.topLinks} />
               </div>
-
-              <Takeaways takeaways={detail.takeaways} />
 
               <ContactsCard contacts={detail.contacts || []} />
 
