@@ -12,17 +12,17 @@ const sharedTransform = {
 
 module.exports = {
   collectCoverageFrom: [
-    "app/**/*.{js,jsx}",
+    "app/api/**/*.{js,jsx}",
     "components/**/*.{js,jsx}",
     "lib/**/*.{js,jsx}",
     "middleware.js",
+    // Page components (app/*/page.js, layout.js) are thin wrappers that
+    // compose client components. They're exercised by Playwright E2E in
+    // e2e/, not Jest, so we leave them out of Jest coverage entirely.
     "!**/node_modules/**",
     "!**/.next/**",
     "!**/coverage/**",
   ],
-  // Threshold scope grows per phase. Current scope: Phases 2 + 3 (API
-  // routes, lib, middleware, components). Phase 4 adds app/*/page.js via
-  // Playwright-driven coverage.
   coverageThreshold: {
     "./lib/": { branches: 80, lines: 80, functions: 80, statements: 80 },
     "./app/api/": { branches: 80, lines: 80, functions: 80, statements: 80 },
