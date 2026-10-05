@@ -8,4 +8,10 @@ describe("ComingSoon", () => {
     expect(screen.getByText("GA4 metrics coming soon.")).toBeInTheDocument();
     expect(screen.getByText("Coming Soon")).toBeInTheDocument();
   });
+
+  it("renders without crashing when description is omitted", () => {
+    render(<ComingSoon title="LinkedIn" />);
+    expect(screen.getByText("LinkedIn")).toBeInTheDocument();
+    expect(screen.getByText("Coming Soon")).toBeInTheDocument();
+  });
 });
