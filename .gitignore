@@ -12,3 +12,12 @@ node_modules/
 # OS
 .DS_Store
 .vercel
+.env*
+
+# test artifacts
+/coverage/
+/playwright-report/
+/test-results/
+
+# husky generated dispatcher dir
+/.husky/_/
