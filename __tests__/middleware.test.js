@@ -85,12 +85,14 @@ describe("middleware", () => {
     });
   });
 
-  describe("public asset gap (regression)", () => {
-    // Documents the known bug flagged in the review: /logo.jpg is used by the
-    // login page but the middleware matcher does not exclude it and the public
-    // allowlist does not include it, so unauthenticated requests redirect.
-    it("currently redirects /logo.jpg (bug — should allow)", async () => {
+  describe("public assets", () => {
+    it("allows /logo.jpg through without a session (used by the login page)", async () => {
       const res = await middleware(buildRequest("/logo.jpg"));
+      expect(res.headers.get("location")).toBeNull();
+    });
+
+    it("still protects /runbook.html (sensitive content, loaded via auth-gated iframe)", async () => {
+      const res = await middleware(buildRequest("/runbook.html"));
       expect(res.headers.get("location")).toBe(`${ORIGIN}/login`);
     });
   });

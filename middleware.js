@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifyToken } from "./lib/session";
 
-const PUBLIC_PREFIXES = ["/login", "/api/login", "/api/webhooks", "/api/auth/buffer"];
+const PUBLIC_PREFIXES = ["/login", "/api/login", "/api/webhooks", "/api/auth/buffer", "/logo.jpg"];
 
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
