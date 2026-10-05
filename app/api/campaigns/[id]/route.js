@@ -130,6 +130,8 @@ function generateTakeaways({ report, engagementBuckets, topLinks, highOpenNoClic
   return takeaways;
 }
 
+export const _internals = { bucketOpens, buildContactList, findHighOpenNoClick, generateTakeaways };
+
 export async function GET(request, { params }) {
   const { id } = params;
 

@@ -90,6 +90,8 @@ async function batchReports(ids, batchSize = 5) {
   return results;
 }
 
+export const _internals = { generateTrendTakeaways, batchReports };
+
 export async function GET() {
   try {
     const campaigns = await listRepTrainingCampaigns();

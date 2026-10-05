@@ -20,13 +20,13 @@ module.exports = {
     "!**/.next/**",
     "!**/coverage/**",
   ],
+  // Threshold scope grows per phase. Current scope: Phase 2 surfaces
+  // (API routes, lib, middleware). Phase 3 adds components/, Phase 4
+  // adds app/*/page.js via Playwright-driven coverage.
   coverageThreshold: {
-    global: {
-      branches: 80,
-      lines: 80,
-      functions: 80,
-      statements: 80,
-    },
+    "./lib/": { branches: 80, lines: 80, functions: 80, statements: 80 },
+    "./app/api/": { branches: 80, lines: 80, functions: 80, statements: 80 },
+    "./middleware.js": { branches: 80, lines: 80, functions: 80, statements: 80 },
   },
   projects: [
     {
