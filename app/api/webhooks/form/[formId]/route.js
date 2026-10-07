@@ -1,5 +1,9 @@
-import { list, put } from "@vercel/blob";
+import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
+
+export async function GET() {
+  return NextResponse.json({ ok: true });
+}
 
 export async function POST(request, { params }) {
   const { formId } = params;
@@ -15,26 +19,14 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const blobKey = `surveys/${formId}.json`;
+  const timestamp = Date.now();
+  const blobKey = `surveys/${formId}/${timestamp}.json`;
 
-  // Read existing responses
-  let responses = [];
-  try {
-    const { blobs } = await list({ prefix: blobKey });
-    if (blobs.length > 0) {
-      const res = await fetch(blobs[0].url, { cache: "no-store" });
-      responses = await res.json();
-    }
-  } catch {}
-
-  // Prepend — newest first
-  responses.unshift({ ...payload, _receivedAt: new Date().toISOString() });
-
-  await put(blobKey, JSON.stringify(responses), {
-    access: "public",
+  await put(blobKey, JSON.stringify({ ...payload, _receivedAt: new Date().toISOString() }), {
+    access: "private",
     contentType: "application/json",
     addRandomSuffix: false,
   });
 
-  return NextResponse.json({ ok: true, count: responses.length });
+  return NextResponse.json({ ok: true });
 }

@@ -17,6 +17,18 @@ Instead of switching between Mailchimp, Google Analytics, LinkedIn, and separate
 
 ## Sections Overview
 
+### Events & Marketing Calendar
+*Status: Live*
+
+The home page of the dashboard. A shared marketing calendar view built around our existing Outlook calendar:
+
+- Industry trade shows (AHR Expo, ACCA, etc.) with dates, locations, and attendance notes
+- Marketing plans and notes tied to each event
+- Email campaign schedule overlaid on the same view
+- Managed directly from Outlook — no separate tool to maintain
+
+---
+
 ### Email Campaign Analytics
 *Status: Live*
 
@@ -24,23 +36,32 @@ Connected directly to Mailchimp. Provides a full performance view for any campai
 
 - Open rate, click rate, click-to-open, bounces, and unsubscribes
 - Engagement depth — how deeply recipients read and interacted with each email
-- Top clicked links
+- Top clicked links with click counts
 - Funnel visualization from sent → delivered → opened → clicked
+- Contact list showing who opened and clicked each campaign
 - Rolling trends and baseline across all historical sends so each campaign can be compared to our own average
+- Results are cached so the dashboard loads quickly without hitting Mailchimp on every visit
 
 ---
 
-### Events & Marketing Calendar
-*Status: Live (Outlook-connected, coming soon)*
+### Survey Responses
+*Status: Live*
 
-A shared marketing calendar view built around our existing Outlook calendar:
+Form responses from Zapier-connected surveys viewable directly in the dashboard — no need to open a spreadsheet separately. Each survey gets its own view with submitted data in a clean, readable format.
 
-- Industry trade shows (AHR Expo, ACCA, etc.) with dates, locations, and attendance notes
-- Marketing plans and notes tied to each event
-- Email campaign schedule overlaid on the same view
-- Managed directly from Outlook — no separate tool to maintain
+Current surveys:
+- Arctidry Training
+- Rep Company Feedback
+- Arctidry Feedback
 
-This gives the team a single place to see what's coming up and what marketing activity surrounds each event.
+New responses flow in automatically via Zapier webhooks and are stored securely on Vercel Blob storage. Additional surveys can be added by creating a new Zap — no code changes required.
+
+---
+
+### Runbook
+*Status: Live*
+
+A living operations document covering campaign SOPs, form workflows, and event checklists. Accessible to anyone with dashboard access. Maintained and updated by AI to reflect current team processes.
 
 ---
 
@@ -68,13 +89,6 @@ Mojave's LinkedIn company page performance, reviewed from inside the dashboard:
 
 ---
 
-### Form Submissions
-*Status: Coming Soon*
-
-Google Form responses (contact forms, quote requests, etc.) viewable directly in the dashboard — no need to open Google Sheets separately. Each form gets its own view with submitted data in a clean, readable format.
-
----
-
 ### AI-Assisted Campaign Summaries
 *Status: Coming Soon*
 
@@ -82,21 +96,12 @@ Each email campaign report will include a short AI-generated narrative (3–4 se
 
 ---
 
-### Runbook
-*Status: Coming Soon — Admin Only*
-
-A living operations document covering campaign SOPs, form workflows, and event checklists. Accessible only to marketing admins. Maintained and updated by AI to reflect current team processes.
-
----
-
 ## Access & Security
 
 - Password-protected — no accounts, SSO, or app installation required
 - Accessible from any browser on any device
-- Two access levels:
-  - **User** — full dashboard access (email analytics, website, LinkedIn, forms, calendar)
-  - **Admin** — adds access to the Runbook
-- Hosted on Vercel; data is never stored in the dashboard itself — it's always pulled live from the source systems
+- Single access level — everyone with the password sees the full dashboard including the Runbook
+- Hosted on Vercel; all data is pulled live from source systems or stored in Vercel Blob; no separate database is needed at current scale
 
 ---
 
@@ -105,10 +110,10 @@ A living operations document covering campaign SOPs, form workflows, and event c
 | Phase | Scope | Status |
 |---|---|---|
 | 1 | Email campaign analytics, secure login, brand | **Complete** |
-| 2 | Sidebar navigation, Events & Calendar view | **In Progress** |
-| 3 | Website analytics (GA4), Form submissions | Upcoming |
-| 4 | LinkedIn analytics (file-based), AI campaign summaries | Upcoming |
-| 5 | Runbook, dual-role access (User / Admin) | Upcoming |
+| 2 | Sidebar navigation, Events & Calendar, Survey Responses, Runbook | **Complete** |
+| 3 | Website analytics (GA4), LinkedIn analytics (file-based) | Upcoming |
+| 4 | AI campaign summaries | Upcoming |
+| 5 | Outlook calendar live sync via Zapier webhook | Upcoming |
 
 ---
 
@@ -116,10 +121,16 @@ A living operations document covering campaign SOPs, form workflows, and event c
 
 The dashboard is live and password-protected at our Vercel deployment. Current capabilities:
 
-- Full email campaign analytics for every Mailchimp send
-- Trends & baseline view across all sends
-- New sidebar navigation with section structure for all upcoming features
-- Events & Marketing Calendar with placeholder industry events (AHR Expo, ACCA, etc.)
-- "Coming Soon" placeholders for Website Analytics, LinkedIn, Forms, and Runbook
+- Full email campaign analytics for every Mailchimp send, with caching for fast loads
+- Trends & baseline view across all historical sends
+- Contact-level opens and clicks per campaign
+- Events & Marketing Calendar with upcoming trade shows and campaign dates
+- Survey Responses for 3 active surveys, auto-populated via Zapier
+- Runbook with current marketing SOPs
+- Collapsible sidebar navigation with "Coming Soon" placeholders for Website and LinkedIn Analytics
 
-The goal of this meeting is to align on the roadmap, confirm the section priorities, and identify any additional data sources or use cases to include before Phase 3 begins.
+---
+
+## Infrastructure Notes
+
+**No database needed at current scale.** Survey responses and future webhook data are stored in Vercel Blob — a simple, cost-effective file store well-suited for low-volume internal tools. A dedicated database (Postgres, etc.) would only be warranted if the app grows to thousands of records with complex querying needs, or if multiple data types need relational linking (e.g. contacts linked to campaigns linked to survey responses). That decision can be revisited if the tool expands beyond marketing ops use.

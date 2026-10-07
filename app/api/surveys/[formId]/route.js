@@ -1,4 +1,4 @@
-import { list } from "@vercel/blob";
+import { get, list } from "@vercel/blob";
 import { NextResponse } from "next/server";
 
 export async function GET(request, { params }) {
@@ -9,13 +9,24 @@ export async function GET(request, { params }) {
   }
 
   try {
-    const { blobs } = await list({ prefix: `surveys/${formId}.json` });
+    const { blobs } = await list({ prefix: `surveys/${formId}/` });
     if (blobs.length === 0) {
       return NextResponse.json({ responses: [], total: 0 });
     }
-    const res = await fetch(blobs[0].url, { cache: "no-store" });
-    const responses = await res.json();
-    return NextResponse.json({ responses, total: responses.length });
+
+    const responses = await Promise.all(
+      blobs.map(async (blob) => {
+        const result = await get(blob.pathname, { access: "private" });
+        if (!result || result.statusCode !== 200) return null;
+        return new Response(result.stream).json();
+      })
+    );
+
+    const valid = responses
+      .filter(Boolean)
+      .sort((a, b) => new Date(b._receivedAt) - new Date(a._receivedAt));
+
+    return NextResponse.json({ responses: valid, total: valid.length });
   } catch (err) {
     console.error(err);
     return NextResponse.json(
