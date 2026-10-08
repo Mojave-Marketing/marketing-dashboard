@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { listRepTrainingCampaigns, getCampaignPollResults } from "../../../../lib/mailchimp";
+import {
+  listRepTrainingCampaigns,
+  getCampaignPollResults,
+  getCampaignClickDetails,
+} from "../../../../lib/mailchimp";
 
 // Mailchimp campaign polls surface here as "survey responses".
 //
@@ -10,8 +14,29 @@ import { listRepTrainingCampaigns, getCampaignPollResults } from "../../../../li
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const campaignIdParam = searchParams.get("campaignId");
+  const debug = searchParams.get("debug") === "1";
 
   try {
+    // Debug: show what the detection sees so we can fix the regex when it misses.
+    // Returns scanned campaign titles + sample click URLs per campaign.
+    if (debug) {
+      const campaigns = await listRepTrainingCampaigns();
+      const scanLimit = Math.min(10, campaigns.length);
+      const scanned = [];
+      for (let i = 0; i < scanLimit; i++) {
+        const c = campaigns[i];
+        let urls = [];
+        try {
+          const links = await getCampaignClickDetails(c.id);
+          urls = links.slice(0, 15).map((l) => l.url);
+        } catch (err) {
+          urls = [`<error: ${err.message}>`];
+        }
+        scanned.push({ id: c.id, title: c.title, sendTime: c.sendTime, urls });
+      }
+      return NextResponse.json({ debug: true, scanned });
+    }
+
     // Explicit campaign requested — try that one directly.
     if (campaignIdParam) {
       const campaigns = await listRepTrainingCampaigns();
