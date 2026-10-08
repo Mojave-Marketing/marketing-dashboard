@@ -37,6 +37,44 @@ export async function GET(request) {
       return NextResponse.json({ debug: true, scanned });
     }
 
+    // Deep probe: given a specific campaignId, fetch every plausible endpoint
+    // for poll data so we can see where Mailchimp actually stores it.
+    const probe = searchParams.get("probe");
+    if (probe) {
+      const result = { probe };
+      const { apiKey, baseUrl } = (() => {
+        const key = process.env.MAILCHIMP_API_KEY;
+        const prefix = process.env.MAILCHIMP_SERVER_PREFIX;
+        return { apiKey: key, baseUrl: `https://${prefix}.api.mailchimp.com/3.0` };
+      })();
+      const auth = "Basic " + Buffer.from(`anystring:${apiKey}`).toString("base64");
+
+      // Probe each candidate endpoint; capture status + a trimmed body.
+      const endpoints = [
+        `/reports/${probe}`,
+        `/reports/${probe}/poll-activity`,
+        `/reports/${probe}/polls`,
+        `/reports/${probe}/email-activity?count=3`,
+        `/campaigns/${probe}/content`,
+      ];
+      result.endpoints = await Promise.all(
+        endpoints.map(async (path) => {
+          try {
+            const res = await fetch(`${baseUrl}${path}`, { headers: { Authorization: auth }, cache: "no-store" });
+            const text = await res.text();
+            return {
+              path,
+              status: res.status,
+              bodyPreview: text.length > 4000 ? text.slice(0, 4000) + "\n...<truncated>" : text,
+            };
+          } catch (err) {
+            return { path, error: err.message };
+          }
+        })
+      );
+      return NextResponse.json(result);
+    }
+
     // Explicit campaign requested — try that one directly.
     if (campaignIdParam) {
       const campaigns = await listRepTrainingCampaigns();
