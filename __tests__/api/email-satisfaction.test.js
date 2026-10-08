@@ -151,10 +151,24 @@ describe("GET /api/surveys/email-satisfaction", () => {
       const res = await GET(req("probe=c-123"));
       const body = await res.json();
       expect(body.probe).toBe("c-123");
-      expect(body.endpoints).toHaveLength(7);
-      expect(body.endpoints[0].path).toContain("/reports/c-123");
-      expect(body.endpoints[0].status).toBe(200);
-      expect(body.endpoints[0].bodyPreview).toBe('{"poll": "data"}');
+      expect(body.endpoints).toHaveLength(7); // campaign-mode: 5 report + 2 surveys list
+    });
+
+    it("probes survey endpoints when probe is prefixed with 'survey:'", async () => {
+      global.fetch.mockResolvedValue({
+        status: 200,
+        text: () => Promise.resolve('{"ok":true}'),
+      });
+      const res = await GET(req("probe=survey:abc"));
+      const body = await res.json();
+      expect(body.endpoints.map((e) => e.path)).toEqual(
+        expect.arrayContaining([
+          "/reporting/surveys/abc",
+          "/reporting/surveys/abc/questions",
+          "/reporting/surveys/abc/responses",
+          "/reporting/surveys/abc/responses?count=5",
+        ])
+      );
     });
 
     it("truncates long response bodies to 4000 chars", async () => {

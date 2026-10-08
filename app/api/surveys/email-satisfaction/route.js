@@ -49,11 +49,19 @@ export async function GET(request) {
       })();
       const auth = "Basic " + Buffer.from(`anystring:${apiKey}`).toString("base64");
 
-      // Probe each candidate endpoint; capture status + a trimmed body.
-      // probe=<campaignId> drives the first set; the list_id is appended via
-      // the ?listId=<id> query param so we can also hit the surveys endpoints.
+      // probe can be either a campaignId or (prefixed with "survey:") a surveyId.
+      // Switch the endpoint set accordingly.
       const listId = searchParams.get("listId");
-      const endpoints = [
+      const isSurvey = probe.startsWith("survey:");
+      const surveyId = isSurvey ? probe.slice("survey:".length) : null;
+
+      const endpoints = isSurvey ? [
+        `/reporting/surveys/${surveyId}`,
+        `/reporting/surveys/${surveyId}/questions`,
+        `/reporting/surveys/${surveyId}/responses`,
+        `/reporting/surveys/${surveyId}/responses?count=5`,
+        ...(listId ? [`/lists/${listId}/surveys/${surveyId}`] : []),
+      ] : [
         `/reports/${probe}`,
         `/reports/${probe}/poll-activity`,
         `/reports/${probe}/polls`,
