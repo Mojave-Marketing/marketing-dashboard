@@ -50,12 +50,18 @@ export async function GET(request) {
       const auth = "Basic " + Buffer.from(`anystring:${apiKey}`).toString("base64");
 
       // Probe each candidate endpoint; capture status + a trimmed body.
+      // probe=<campaignId> drives the first set; the list_id is appended via
+      // the ?listId=<id> query param so we can also hit the surveys endpoints.
+      const listId = searchParams.get("listId");
       const endpoints = [
         `/reports/${probe}`,
         `/reports/${probe}/poll-activity`,
         `/reports/${probe}/polls`,
         `/reports/${probe}/email-activity?count=3`,
         `/campaigns/${probe}/content`,
+        `/reporting/surveys`,
+        `/reporting/surveys?count=10`,
+        ...(listId ? [`/lists/${listId}/surveys`] : []),
       ];
       result.endpoints = await Promise.all(
         endpoints.map(async (path) => {

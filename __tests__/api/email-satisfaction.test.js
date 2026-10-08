@@ -5,6 +5,7 @@
 jest.mock("../../lib/mailchimp", () => ({
   listRepTrainingCampaigns: jest.fn(),
   getCampaignPollResults: jest.fn(),
+  getCampaignClickDetails: jest.fn(),
 }));
 
 const mc = require("../../lib/mailchimp");
@@ -19,6 +20,7 @@ describe("GET /api/surveys/email-satisfaction", () => {
   beforeEach(() => {
     mc.listRepTrainingCampaigns.mockReset();
     mc.getCampaignPollResults.mockReset();
+    mc.getCampaignClickDetails.mockReset();
     console.error = jest.fn();
   });
   afterAll(() => {
@@ -93,5 +95,85 @@ describe("GET /api/surveys/email-satisfaction", () => {
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(body.error).toMatch(/mailchimp down/);
+  });
+
+  describe("?debug=1", () => {
+    it("returns scanned campaign titles + first 15 click-details URLs each", async () => {
+      mc.listRepTrainingCampaigns.mockResolvedValue([
+        { id: "c1", title: "First", sendTime: "2026-10-01T00:00:00Z" },
+        { id: "c2", title: "Second", sendTime: "2026-09-01T00:00:00Z" },
+      ]);
+      mc.getCampaignClickDetails
+        .mockResolvedValueOnce([
+          { url: "https://a.com/1" },
+          { url: "https://a.com/2" },
+        ])
+        .mockResolvedValueOnce([]);
+      const res = await GET(req("debug=1"));
+      const body = await res.json();
+      expect(body.debug).toBe(true);
+      expect(body.scanned).toHaveLength(2);
+      expect(body.scanned[0].urls).toEqual(["https://a.com/1", "https://a.com/2"]);
+      expect(body.scanned[1].urls).toEqual([]);
+    });
+
+    it("captures per-campaign errors in the urls array", async () => {
+      mc.listRepTrainingCampaigns.mockResolvedValue([
+        { id: "c1", title: "First", sendTime: "2026-10-01T00:00:00Z" },
+      ]);
+      mc.getCampaignClickDetails.mockRejectedValue(new Error("rate limited"));
+      const res = await GET(req("debug=1"));
+      const body = await res.json();
+      expect(body.scanned[0].urls[0]).toMatch(/<error: rate limited>/);
+    });
+  });
+
+  describe("?probe=<campaignId>", () => {
+    const originalKey = process.env.MAILCHIMP_API_KEY;
+    const originalPrefix = process.env.MAILCHIMP_SERVER_PREFIX;
+    const originalFetch = global.fetch;
+    beforeEach(() => {
+      process.env.MAILCHIMP_API_KEY = "test-key";
+      process.env.MAILCHIMP_SERVER_PREFIX = "us18";
+      global.fetch = jest.fn();
+    });
+    afterAll(() => {
+      process.env.MAILCHIMP_API_KEY = originalKey;
+      process.env.MAILCHIMP_SERVER_PREFIX = originalPrefix;
+      global.fetch = originalFetch;
+    });
+
+    it("probes each candidate endpoint and returns status + bodyPreview", async () => {
+      global.fetch.mockResolvedValue({
+        status: 200,
+        text: () => Promise.resolve('{"poll": "data"}'),
+      });
+      const res = await GET(req("probe=c-123"));
+      const body = await res.json();
+      expect(body.probe).toBe("c-123");
+      expect(body.endpoints).toHaveLength(7);
+      expect(body.endpoints[0].path).toContain("/reports/c-123");
+      expect(body.endpoints[0].status).toBe(200);
+      expect(body.endpoints[0].bodyPreview).toBe('{"poll": "data"}');
+    });
+
+    it("truncates long response bodies to 4000 chars", async () => {
+      const huge = "x".repeat(10000);
+      global.fetch.mockResolvedValue({
+        status: 200,
+        text: () => Promise.resolve(huge),
+      });
+      const res = await GET(req("probe=c"));
+      const body = await res.json();
+      expect(body.endpoints[0].bodyPreview.length).toBeLessThan(4100);
+      expect(body.endpoints[0].bodyPreview).toMatch(/truncated/);
+    });
+
+    it("captures fetch errors per endpoint without failing the whole probe", async () => {
+      global.fetch.mockRejectedValue(new Error("network down"));
+      const res = await GET(req("probe=c"));
+      const body = await res.json();
+      expect(body.endpoints.every((e) => e.error === "network down")).toBe(true);
+    });
   });
 });
