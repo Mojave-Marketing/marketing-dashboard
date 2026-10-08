@@ -9,6 +9,7 @@ let getCampaignReport;
 let getCampaignClickDetails;
 let getCampaignEmailActivity;
 let getListMemberProfiles;
+let getCampaignPollResults;
 
 const originalFetch = global.fetch;
 
@@ -31,6 +32,7 @@ beforeEach(() => {
   getCampaignClickDetails = mod.getCampaignClickDetails;
   getCampaignEmailActivity = mod.getCampaignEmailActivity;
   getListMemberProfiles = mod.getListMemberProfiles;
+  getCampaignPollResults = mod.getCampaignPollResults;
 
   global.fetch = jest.fn();
   process.env.MAILCHIMP_API_KEY = "test-api-key-us21";
@@ -215,5 +217,111 @@ describe("getListMemberProfiles", () => {
     expect(profiles.size).toBe(1);
     // 1 merge-fields fetch + 1 members fetch (short page = stop)
     expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("getCampaignPollResults", () => {
+  // Each test mocks: the click-details fetch, then one members fetch per
+  // detected poll choice. We use fresh campaign IDs so the lib/cache doesn't
+  // bleed results between tests.
+  function pollLink(optionId, totalClicks = 1, linkId = `link-${optionId}`) {
+    return {
+      id: linkId,
+      url: `https://mojavehvac.us18.list-manage.com/vote?u=xxx&id=yyy&POLL=217:${optionId}`,
+      total_clicks: totalClicks,
+      unique_clicks: totalClicks,
+    };
+  }
+
+  it("returns null when the campaign has no clicked URLs", async () => {
+    mockFetchOnce({ urls_clicked: [] });
+    await expect(getCampaignPollResults("c-empty")).resolves.toBeNull();
+  });
+
+  it("returns null when no URL matches the POLL= pattern", async () => {
+    mockFetchOnce({
+      urls_clicked: [
+        { id: "l1", url: "https://mojavehvac.com/products/arctidry", total_clicks: 5, unique_clicks: 5 },
+      ],
+    });
+    await expect(getCampaignPollResults("c-no-poll")).resolves.toBeNull();
+  });
+
+  it("returns 'per-recipient' shape when members endpoint attributes clicks", async () => {
+    mockFetchOnce({
+      urls_clicked: [
+        pollLink(1406, 2),
+        pollLink(1407, 1),
+      ],
+    });
+    // members fetch for each choice (in choices-ascending-option-id order)
+    mockFetchOnce({ members: [{ email_address: "a@x", last_click: "2026-10-01T00:00:00Z" }, { email_address: "b@x", last_click: "2026-10-02T00:00:00Z" }] });
+    mockFetchOnce({ members: [{ email_address: "c@x", last_click: "2026-10-03T00:00:00Z" }] });
+
+    const result = await getCampaignPollResults("c-attributed");
+    expect(result.shape).toBe("per-recipient");
+    expect(result.pollId).toBe("217");
+    expect(result.total).toBe(3);
+    expect(result.responses.map((r) => r.Email)).toEqual(["c@x", "b@x", "a@x"]);
+    expect(result.responses[0].Rating).toBe(2); // c@x voted option_id 1407 → rating 2
+    expect(result.responses[2].Rating).toBe(1); // a@x voted option_id 1406 → rating 1
+  });
+
+  it("falls back to 'aggregate' shape when members endpoint returns empty", async () => {
+    mockFetchOnce({
+      urls_clicked: [
+        pollLink(1406, 2),
+        pollLink(1407, 3),
+        pollLink(1408, 5),
+      ],
+    });
+    // All member fetches empty (anonymous polls)
+    mockFetchOnce({ members: [] });
+    mockFetchOnce({ members: [] });
+    mockFetchOnce({ members: [] });
+
+    const result = await getCampaignPollResults("c-aggregate");
+    expect(result.shape).toBe("aggregate");
+    expect(result.totalVotes).toBe(10);
+    expect(result.distribution).toEqual([
+      { rating: 1, votes: 2 },
+      { rating: 2, votes: 3 },
+      { rating: 3, votes: 5 },
+    ]);
+    // weighted avg: (1*2 + 2*3 + 3*5) / 10 = 2.3
+    expect(result.avgRating).toBeCloseTo(2.3);
+  });
+
+  it("picks the poll with the most options when a campaign has more than one", async () => {
+    mockFetchOnce({
+      urls_clicked: [
+        { id: "a", url: "https://x.com/vote?POLL=100:1", total_clicks: 1, unique_clicks: 1 },
+        { id: "b", url: "https://x.com/vote?POLL=100:2", total_clicks: 1, unique_clicks: 1 },
+        { id: "c", url: "https://x.com/vote?POLL=217:1406", total_clicks: 1, unique_clicks: 1 },
+        { id: "d", url: "https://x.com/vote?POLL=217:1407", total_clicks: 1, unique_clicks: 1 },
+        { id: "e", url: "https://x.com/vote?POLL=217:1408", total_clicks: 1, unique_clicks: 1 },
+      ],
+    });
+    // Three members fetches for poll 217 (3 choices) — all empty → aggregate
+    mockFetchOnce({ members: [] });
+    mockFetchOnce({ members: [] });
+    mockFetchOnce({ members: [] });
+
+    const result = await getCampaignPollResults("c-multi-poll");
+    expect(result.pollId).toBe("217");
+    expect(result.distribution).toHaveLength(3);
+  });
+
+  it("handles aggregate shape with zero votes gracefully", async () => {
+    mockFetchOnce({
+      urls_clicked: [pollLink(1406, 0), pollLink(1407, 0)],
+    });
+    mockFetchOnce({ members: [] });
+    mockFetchOnce({ members: [] });
+
+    const result = await getCampaignPollResults("c-no-votes");
+    expect(result.shape).toBe("aggregate");
+    expect(result.totalVotes).toBe(0);
+    expect(result.avgRating).toBe(0);
   });
 });

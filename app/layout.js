@@ -15,11 +15,16 @@ const DEFAULT_FORMS = [
   { id: "arctidry-feedback", name: "Arctidry Feedback" },
 ];
 
+// Mailchimp poll results are a built-in "survey" source — appended regardless of
+// WEBHOOK_FORMS so it always appears next to Zapier survey entries.
+const MAILCHIMP_FORM = { id: "email-satisfaction", name: "Email Satisfaction" };
+
 function getForms() {
+  let zapForms = DEFAULT_FORMS;
   try {
-    if (process.env.WEBHOOK_FORMS) return JSON.parse(process.env.WEBHOOK_FORMS);
+    if (process.env.WEBHOOK_FORMS) zapForms = JSON.parse(process.env.WEBHOOK_FORMS);
   } catch {}
-  return DEFAULT_FORMS;
+  return [...zapForms, MAILCHIMP_FORM];
 }
 
 export default function RootLayout({ children }) {
