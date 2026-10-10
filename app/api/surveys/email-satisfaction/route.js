@@ -1,131 +1,125 @@
 import { NextResponse } from "next/server";
 import {
-  listRepTrainingCampaigns,
-  getCampaignPollResults,
-  getCampaignClickDetails,
+  listMailchimpSurveys,
+  getMailchimpSurveyWithQuestions,
+  getMailchimpSurveyResponses,
 } from "../../../../lib/mailchimp";
 
-// Mailchimp campaign polls surface here as "survey responses".
-//
-// Response shape, discriminated by `shape`:
-//   { shape: "per-recipient", campaign: {...}, pollId, responses: [...], total }
-//   { shape: "aggregate",     campaign: {...}, pollId, distribution, totalVotes, avgRating }
-//   { shape: "none",          message, scanned: N }   when no recent campaign had a poll
+// Returns the latest published Mailchimp Survey + its responses, normalized
+// into one of two shapes the view component already understands:
+//   { shape: "per-recipient", survey, question, responses: [{Email, Rating, _receivedAt}], total }
+//   { shape: "aggregate",     survey, question, distribution, totalVotes, avgRating }
+// Query param ?surveyId=X selects a specific survey; without it we pick the
+// most recent published survey.
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
-  const campaignIdParam = searchParams.get("campaignId");
-  const debug = searchParams.get("debug") === "1";
+  const surveyIdParam = searchParams.get("surveyId");
 
   try {
-    // Debug: show what the detection sees so we can fix the regex when it misses.
-    // Returns scanned campaign titles + sample click URLs per campaign.
-    if (debug) {
-      const campaigns = await listRepTrainingCampaigns();
-      const scanLimit = Math.min(10, campaigns.length);
-      const scanned = [];
-      for (let i = 0; i < scanLimit; i++) {
-        const c = campaigns[i];
-        let urls = [];
-        try {
-          const links = await getCampaignClickDetails(c.id);
-          urls = links.slice(0, 15).map((l) => l.url);
-        } catch (err) {
-          urls = [`<error: ${err.message}>`];
-        }
-        scanned.push({ id: c.id, title: c.title, sendTime: c.sendTime, urls });
-      }
-      return NextResponse.json({ debug: true, scanned });
-    }
-
-    // Deep probe: given a specific campaignId, fetch every plausible endpoint
-    // for poll data so we can see where Mailchimp actually stores it.
-    const probe = searchParams.get("probe");
-    if (probe) {
-      const result = { probe };
-      const { apiKey, baseUrl } = (() => {
-        const key = process.env.MAILCHIMP_API_KEY;
-        const prefix = process.env.MAILCHIMP_SERVER_PREFIX;
-        return { apiKey: key, baseUrl: `https://${prefix}.api.mailchimp.com/3.0` };
-      })();
-      const auth = "Basic " + Buffer.from(`anystring:${apiKey}`).toString("base64");
-
-      // probe can be either a campaignId or (prefixed with "survey:") a surveyId.
-      // Switch the endpoint set accordingly.
-      const listId = searchParams.get("listId");
-      const isSurvey = probe.startsWith("survey:");
-      const surveyId = isSurvey ? probe.slice("survey:".length) : null;
-
-      const endpoints = isSurvey ? [
-        `/reporting/surveys/${surveyId}`,
-        `/reporting/surveys/${surveyId}/questions`,
-        `/reporting/surveys/${surveyId}/responses`,
-        `/reporting/surveys/${surveyId}/responses?count=5`,
-        ...(listId ? [`/lists/${listId}/surveys/${surveyId}`] : []),
-      ] : [
-        `/reports/${probe}`,
-        `/reports/${probe}/poll-activity`,
-        `/reports/${probe}/polls`,
-        `/reports/${probe}/email-activity?count=3`,
-        `/campaigns/${probe}/content`,
-        `/reporting/surveys`,
-        `/reporting/surveys?count=10`,
-        ...(listId ? [`/lists/${listId}/surveys`] : []),
-      ];
-      result.endpoints = await Promise.all(
-        endpoints.map(async (path) => {
-          try {
-            const res = await fetch(`${baseUrl}${path}`, { headers: { Authorization: auth }, cache: "no-store" });
-            const text = await res.text();
-            return {
-              path,
-              status: res.status,
-              bodyPreview: text.length > 4000 ? text.slice(0, 4000) + "\n...<truncated>" : text,
-            };
-          } catch (err) {
-            return { path, error: err.message };
-          }
-        })
-      );
-      return NextResponse.json(result);
-    }
-
-    // Explicit campaign requested — try that one directly.
-    if (campaignIdParam) {
-      const campaigns = await listRepTrainingCampaigns();
-      const campaign = campaigns.find((c) => c.id === campaignIdParam);
-      const results = await getCampaignPollResults(campaignIdParam);
-      if (!results) {
+    let surveyId = surveyIdParam;
+    if (!surveyId) {
+      const surveys = await listMailchimpSurveys();
+      const published = surveys.filter((s) => s.status === "published");
+      if (published.length === 0) {
         return NextResponse.json({
           shape: "none",
-          campaign: campaign || null,
-          message: "No poll detected for this campaign.",
+          message: "No published Mailchimp surveys found.",
         });
       }
-      return NextResponse.json({ ...results, campaign });
+      // Newest-first by published_at. Mailchimp returns surveys without a
+      // guaranteed order so we sort explicitly.
+      published.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
+      surveyId = published[0].id;
     }
 
-    // Default: scan recent campaigns, newest first, and return the first poll
-    // we find. Cap at the 10 most recent so we don't rate-limit on every GET.
-    const campaigns = await listRepTrainingCampaigns();
-    const scanLimit = Math.min(10, campaigns.length);
-    for (let i = 0; i < scanLimit; i++) {
-      const campaign = campaigns[i];
-      const results = await getCampaignPollResults(campaign.id);
-      if (results) {
-        return NextResponse.json({ ...results, campaign });
-      }
+    const survey = await getMailchimpSurveyWithQuestions(surveyId);
+    // We handle the first question only. If future surveys have more, we can
+    // extend the shape to return an array of question results.
+    const question = survey.questions[0];
+    if (!question) {
+      return NextResponse.json({
+        shape: "none",
+        survey,
+        message: "Survey has no questions.",
+      });
     }
 
+    const totalResponses = Number(survey.total_responses || 0);
+
+    // No responses yet — build the aggregate shape from the per-option counts
+    // (which will all be zero). This still shows the question + scale in the UI.
+    if (totalResponses === 0) {
+      return NextResponse.json({
+        shape: "aggregate",
+        survey: { id: survey.id, title: survey.title, publishedAt: survey.published_at },
+        question: { id: question.id, query: question.query, type: question.type },
+        distribution: aggregateFromOptions(question),
+        totalVotes: 0,
+        avgRating: 0,
+      });
+    }
+
+    const responses = await getMailchimpSurveyResponses(surveyId);
+    const normalized = normalizeResponses(responses, question);
+
+    if (normalized.length > 0) {
+      return NextResponse.json({
+        shape: "per-recipient",
+        survey: { id: survey.id, title: survey.title, publishedAt: survey.published_at },
+        question: { id: question.id, query: question.query, type: question.type },
+        responses: normalized,
+        total: normalized.length,
+      });
+    }
+
+    // Mailchimp reports responses exist (total_responses > 0) but we couldn't
+    // extract per-recipient rows — likely anonymous survey. Fall back to the
+    // aggregate counts attached to the question.
+    const distribution = aggregateFromOptions(question);
+    const totalVotes = distribution.reduce((s, d) => s + d.votes, 0);
+    const avgRating = totalVotes > 0
+      ? distribution.reduce((s, d) => s + d.rating * d.votes, 0) / totalVotes
+      : 0;
     return NextResponse.json({
-      shape: "none",
-      scanned: scanLimit,
-      message: `No poll found in the ${scanLimit} most recent campaigns.`,
+      shape: "aggregate",
+      survey: { id: survey.id, title: survey.title, publishedAt: survey.published_at },
+      question: { id: question.id, query: question.query, type: question.type },
+      distribution,
+      totalVotes,
+      avgRating,
     });
   } catch (err) {
     console.error(err);
     return NextResponse.json(
-      { error: err.message || "Failed to load poll results" },
+      { error: err.message || "Failed to load survey results" },
       { status: 500 }
     );
   }
+}
+
+function aggregateFromOptions(question) {
+  const opts = question.options || [];
+  // Range-type questions use numeric labels. For a 1-10 scale we drop the 0
+  // option so the distribution matches the question wording ("1-10").
+  return opts
+    .map((o) => ({ rating: Number(o.label ?? o.id), votes: Number(o.count || 0) }))
+    .filter((d) => Number.isFinite(d.rating) && d.rating >= 1 && d.rating <= 10)
+    .sort((a, b) => a.rating - b.rating);
+}
+
+function normalizeResponses(responses, question) {
+  const rows = [];
+  for (const r of responses) {
+    const answer = (r.answers || []).find((a) => String(a.question_id) === String(question.id));
+    if (!answer) continue;
+    const rating = Number(answer.value);
+    if (!Number.isFinite(rating)) continue;
+    rows.push({
+      Email: r.contact?.email_address || r.contact?.full_name || "Anonymous",
+      Rating: rating,
+      _receivedAt: r.submitted_at || r.updated_at || new Date().toISOString(),
+    });
+  }
+  rows.sort((a, b) => new Date(b._receivedAt) - new Date(a._receivedAt));
+  return rows;
 }

@@ -135,7 +135,7 @@ export default function EmailSatisfactionView() {
   if (data.shape === "none") {
     return (
       <div className="survey-empty">
-        <p className="survey-empty-title">No poll results yet</p>
+        <p className="survey-empty-title">No survey results yet</p>
         <p className="survey-empty-sub">{data.message}</p>
       </div>
     );
@@ -143,12 +143,17 @@ export default function EmailSatisfactionView() {
 
   return (
     <>
-      {data.campaign && (
-        <p className="page-subtitle" style={{ marginBottom: 16 }}>
-          From: <strong>{data.campaign.title}</strong>
-          {data.campaign.sendTime && (
-            <> &middot; sent {formatDate(data.campaign.sendTime)}</>
+      {data.survey && (
+        <p className="page-subtitle" style={{ marginBottom: 8 }}>
+          From: <strong>{data.survey.title}</strong>
+          {data.survey.publishedAt && (
+            <> &middot; published {formatDate(data.survey.publishedAt)}</>
           )}
+        </p>
+      )}
+      {data.question?.query && (
+        <p style={{ marginBottom: 16, fontStyle: "italic", color: "var(--text-secondary)" }}>
+          “{data.question.query}”
         </p>
       )}
       {data.shape === "per-recipient" ? (

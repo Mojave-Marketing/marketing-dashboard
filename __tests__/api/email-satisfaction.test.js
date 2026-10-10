@@ -3,9 +3,9 @@
  */
 
 jest.mock("../../lib/mailchimp", () => ({
-  listRepTrainingCampaigns: jest.fn(),
-  getCampaignPollResults: jest.fn(),
-  getCampaignClickDetails: jest.fn(),
+  listMailchimpSurveys: jest.fn(),
+  getMailchimpSurveyWithQuestions: jest.fn(),
+  getMailchimpSurveyResponses: jest.fn(),
 }));
 
 const mc = require("../../lib/mailchimp");
@@ -15,179 +15,258 @@ function req(query = "") {
   return new Request(`http://localhost:3000/api/surveys/email-satisfaction${query ? "?" + query : ""}`);
 }
 
+function makeQuestion({ options = range0to10WithZeroCounts(), ...overrides } = {}) {
+  return {
+    id: "14206",
+    survey_id: "s1",
+    query: "Rate us 1-10",
+    type: "range",
+    total_responses: 0,
+    is_required: true,
+    options,
+    ...overrides,
+  };
+}
+
+function range0to10WithZeroCounts() {
+  return Array.from({ length: 11 }, (_, i) => ({ id: String(i), label: String(i), count: 0 }));
+}
+
 describe("GET /api/surveys/email-satisfaction", () => {
   const originalError = console.error;
   beforeEach(() => {
-    mc.listRepTrainingCampaigns.mockReset();
-    mc.getCampaignPollResults.mockReset();
-    mc.getCampaignClickDetails.mockReset();
+    mc.listMailchimpSurveys.mockReset();
+    mc.getMailchimpSurveyWithQuestions.mockReset();
+    mc.getMailchimpSurveyResponses.mockReset();
     console.error = jest.fn();
   });
   afterAll(() => {
     console.error = originalError;
   });
 
-  it("returns shape:'none' when no recent campaign has a poll", async () => {
-    mc.listRepTrainingCampaigns.mockResolvedValue([
-      { id: "c1", title: "A", sendTime: "2026-10-01T00:00:00Z" },
-      { id: "c2", title: "B", sendTime: "2026-09-01T00:00:00Z" },
+  it("returns shape:'none' when no published surveys exist", async () => {
+    mc.listMailchimpSurveys.mockResolvedValue([
+      { id: "s1", title: "Draft", status: "draft" },
     ]);
-    mc.getCampaignPollResults.mockResolvedValue(null);
     const res = await GET(req());
     const body = await res.json();
     expect(body.shape).toBe("none");
-    expect(body.scanned).toBe(2);
+    expect(body.message).toMatch(/No published/);
+    expect(mc.getMailchimpSurveyWithQuestions).not.toHaveBeenCalled();
   });
 
-  it("returns the first campaign with a poll when scanning recent campaigns", async () => {
-    mc.listRepTrainingCampaigns.mockResolvedValue([
-      { id: "newest", title: "New", sendTime: "2026-10-05T00:00:00Z" },
-      { id: "has-poll", title: "Satisfaction", sendTime: "2026-09-01T00:00:00Z" },
+  it("picks the newest published survey by published_at", async () => {
+    mc.listMailchimpSurveys.mockResolvedValue([
+      { id: "old", title: "Old", status: "published", published_at: "2026-01-01T00:00:00Z" },
+      { id: "new", title: "New", status: "published", published_at: "2026-10-01T00:00:00Z" },
+      { id: "mid", title: "Mid", status: "published", published_at: "2026-05-01T00:00:00Z" },
     ]);
-    mc.getCampaignPollResults
-      .mockResolvedValueOnce(null) // newest has no poll
-      .mockResolvedValueOnce({
-        shape: "aggregate",
-        pollId: "217",
-        distribution: [{ rating: 1, votes: 3 }],
-        totalVotes: 3,
-        avgRating: 1,
-      });
+    mc.getMailchimpSurveyWithQuestions.mockResolvedValue({
+      id: "new",
+      title: "New",
+      total_responses: 0,
+      questions: [makeQuestion()],
+    });
+    await GET(req());
+    expect(mc.getMailchimpSurveyWithQuestions).toHaveBeenCalledWith("new");
+  });
+
+  it("returns aggregate shape with zero counts when total_responses is 0", async () => {
+    mc.listMailchimpSurveys.mockResolvedValue([
+      { id: "s1", title: "Rating", status: "published", published_at: "2026-10-01T00:00:00Z" },
+    ]);
+    mc.getMailchimpSurveyWithQuestions.mockResolvedValue({
+      id: "s1",
+      title: "Rating",
+      published_at: "2026-10-01T00:00:00Z",
+      total_responses: 0,
+      questions: [makeQuestion()],
+    });
     const res = await GET(req());
     const body = await res.json();
     expect(body.shape).toBe("aggregate");
-    expect(body.pollId).toBe("217");
-    expect(body.campaign.title).toBe("Satisfaction");
+    expect(body.totalVotes).toBe(0);
+    expect(body.avgRating).toBe(0);
+    // Should drop the 0-rating option, keeping 1..10
+    expect(body.distribution).toHaveLength(10);
+    expect(body.distribution[0].rating).toBe(1);
+    expect(body.distribution[9].rating).toBe(10);
+    expect(mc.getMailchimpSurveyResponses).not.toHaveBeenCalled();
   });
 
-  it("respects the campaignId query param", async () => {
-    mc.listRepTrainingCampaigns.mockResolvedValue([
-      { id: "c1", title: "One", sendTime: "2026-10-01T00:00:00Z" },
-      { id: "c2", title: "Two", sendTime: "2026-09-01T00:00:00Z" },
+  it("returns per-recipient shape when responses carry contact info", async () => {
+    mc.listMailchimpSurveys.mockResolvedValue([
+      { id: "s1", title: "Rating", status: "published", published_at: "2026-10-01T00:00:00Z" },
     ]);
-    mc.getCampaignPollResults.mockResolvedValue({
-      shape: "per-recipient",
-      pollId: "999",
-      responses: [{ Email: "a@x", Rating: 10, _receivedAt: "2026-10-01" }],
-      total: 1,
+    mc.getMailchimpSurveyWithQuestions.mockResolvedValue({
+      id: "s1",
+      title: "Rating",
+      total_responses: 2,
+      questions: [makeQuestion({ id: "q1" })],
     });
-    const res = await GET(req("campaignId=c2"));
+    mc.getMailchimpSurveyResponses.mockResolvedValue([
+      { id: "r1", contact: { email_address: "a@x.com" }, submitted_at: "2026-10-05T00:00:00Z", answers: [{ question_id: "q1", value: "9" }] },
+      { id: "r2", contact: { email_address: "b@x.com" }, submitted_at: "2026-10-06T00:00:00Z", answers: [{ question_id: "q1", value: "4" }] },
+    ]);
+    const res = await GET(req());
     const body = await res.json();
-    expect(mc.getCampaignPollResults).toHaveBeenCalledWith("c2");
     expect(body.shape).toBe("per-recipient");
-    expect(body.campaign.title).toBe("Two");
+    expect(body.total).toBe(2);
+    // sorted newest-first
+    expect(body.responses[0].Email).toBe("b@x.com");
+    expect(body.responses[0].Rating).toBe(4);
+    expect(body.responses[1].Email).toBe("a@x.com");
+    expect(body.responses[1].Rating).toBe(9);
   });
 
-  it("returns shape:'none' with the campaign when the specified campaign has no poll", async () => {
-    mc.listRepTrainingCampaigns.mockResolvedValue([
-      { id: "c-dry", title: "Dry", sendTime: "2026-10-01T00:00:00Z" },
+  it("falls back to aggregate when total_responses>0 but no per-recipient rows resolve", async () => {
+    mc.listMailchimpSurveys.mockResolvedValue([
+      { id: "s1", title: "Rating", status: "published", published_at: "2026-10-01T00:00:00Z" },
     ]);
-    mc.getCampaignPollResults.mockResolvedValue(null);
-    const res = await GET(req("campaignId=c-dry"));
+    mc.getMailchimpSurveyWithQuestions.mockResolvedValue({
+      id: "s1",
+      title: "Rating",
+      total_responses: 3,
+      questions: [makeQuestion({
+        id: "q1",
+        options: [
+          { id: "0", label: "0", count: 0 },
+          { id: "7", label: "7", count: 2 },
+          { id: "9", label: "9", count: 1 },
+        ],
+      })],
+    });
+    // Response rows exist but answers don't reference q1 (anonymous survey case)
+    mc.getMailchimpSurveyResponses.mockResolvedValue([
+      { id: "r1", answers: [{ question_id: "other", value: "yes" }] },
+    ]);
+    const res = await GET(req());
+    const body = await res.json();
+    expect(body.shape).toBe("aggregate");
+    expect(body.totalVotes).toBe(3);
+    expect(body.avgRating).toBeCloseTo((7 * 2 + 9 * 1) / 3);
+  });
+
+  it("respects the surveyId query param", async () => {
+    mc.getMailchimpSurveyWithQuestions.mockResolvedValue({
+      id: "custom",
+      title: "Custom",
+      total_responses: 0,
+      questions: [makeQuestion()],
+    });
+    await GET(req("surveyId=custom"));
+    expect(mc.listMailchimpSurveys).not.toHaveBeenCalled();
+    expect(mc.getMailchimpSurveyWithQuestions).toHaveBeenCalledWith("custom");
+  });
+
+  it("returns shape:'none' when the chosen survey has no questions", async () => {
+    mc.listMailchimpSurveys.mockResolvedValue([
+      { id: "s1", title: "Empty", status: "published", published_at: "2026-10-01" },
+    ]);
+    mc.getMailchimpSurveyWithQuestions.mockResolvedValue({
+      id: "s1",
+      title: "Empty",
+      total_responses: 0,
+      questions: [],
+    });
+    const res = await GET(req());
     const body = await res.json();
     expect(body.shape).toBe("none");
-    expect(body.campaign.id).toBe("c-dry");
+    expect(body.message).toMatch(/no questions/i);
   });
 
   it("returns 500 when the lib throws", async () => {
-    mc.listRepTrainingCampaigns.mockRejectedValue(new Error("mailchimp down"));
+    mc.listMailchimpSurveys.mockRejectedValue(new Error("mailchimp down"));
     const res = await GET(req());
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(body.error).toMatch(/mailchimp down/);
   });
 
-  describe("?debug=1", () => {
-    it("returns scanned campaign titles + first 15 click-details URLs each", async () => {
-      mc.listRepTrainingCampaigns.mockResolvedValue([
-        { id: "c1", title: "First", sendTime: "2026-10-01T00:00:00Z" },
-        { id: "c2", title: "Second", sendTime: "2026-09-01T00:00:00Z" },
+  describe("edge-case normalization", () => {
+    const basics = {
+      id: "s1",
+      title: "Rating",
+      total_responses: 1,
+      published_at: "2026-10-01T00:00:00Z",
+    };
+
+    it("skips response rows that lack an answer for the chosen question", async () => {
+      mc.getMailchimpSurveyWithQuestions.mockResolvedValue({
+        ...basics,
+        questions: [makeQuestion({ id: "q1" })],
+      });
+      mc.getMailchimpSurveyResponses.mockResolvedValue([
+        { id: "r1", contact: { email_address: "a@x" }, submitted_at: "2026-10-01", answers: [] },
+        { id: "r2", contact: { email_address: "b@x" }, submitted_at: "2026-10-02" }, // no `answers` key
       ]);
-      mc.getCampaignClickDetails
-        .mockResolvedValueOnce([
-          { url: "https://a.com/1" },
-          { url: "https://a.com/2" },
-        ])
-        .mockResolvedValueOnce([]);
-      const res = await GET(req("debug=1"));
+      const res = await GET(req("surveyId=s1"));
       const body = await res.json();
-      expect(body.debug).toBe(true);
-      expect(body.scanned).toHaveLength(2);
-      expect(body.scanned[0].urls).toEqual(["https://a.com/1", "https://a.com/2"]);
-      expect(body.scanned[1].urls).toEqual([]);
+      // Both rows get skipped (no matching answers), so we fall back to aggregate.
+      expect(body.shape).toBe("aggregate");
     });
 
-    it("captures per-campaign errors in the urls array", async () => {
-      mc.listRepTrainingCampaigns.mockResolvedValue([
-        { id: "c1", title: "First", sendTime: "2026-10-01T00:00:00Z" },
+    it("skips rows where the answer value is non-numeric", async () => {
+      mc.getMailchimpSurveyWithQuestions.mockResolvedValue({
+        ...basics,
+        questions: [makeQuestion({ id: "q1" })],
+      });
+      mc.getMailchimpSurveyResponses.mockResolvedValue([
+        { id: "r1", contact: { email_address: "a@x" }, submitted_at: "2026-10-01", answers: [{ question_id: "q1", value: "not a number" }] },
       ]);
-      mc.getCampaignClickDetails.mockRejectedValue(new Error("rate limited"));
-      const res = await GET(req("debug=1"));
+      const res = await GET(req("surveyId=s1"));
       const body = await res.json();
-      expect(body.scanned[0].urls[0]).toMatch(/<error: rate limited>/);
-    });
-  });
-
-  describe("?probe=<campaignId>", () => {
-    const originalKey = process.env.MAILCHIMP_API_KEY;
-    const originalPrefix = process.env.MAILCHIMP_SERVER_PREFIX;
-    const originalFetch = global.fetch;
-    beforeEach(() => {
-      process.env.MAILCHIMP_API_KEY = "test-key";
-      process.env.MAILCHIMP_SERVER_PREFIX = "us18";
-      global.fetch = jest.fn();
-    });
-    afterAll(() => {
-      process.env.MAILCHIMP_API_KEY = originalKey;
-      process.env.MAILCHIMP_SERVER_PREFIX = originalPrefix;
-      global.fetch = originalFetch;
+      expect(body.shape).toBe("aggregate");
     });
 
-    it("probes each candidate endpoint and returns status + bodyPreview", async () => {
-      global.fetch.mockResolvedValue({
-        status: 200,
-        text: () => Promise.resolve('{"poll": "data"}'),
+    it("falls back to full_name then 'Anonymous' when email is missing", async () => {
+      mc.getMailchimpSurveyWithQuestions.mockResolvedValue({
+        ...basics,
+        total_responses: 2,
+        questions: [makeQuestion({ id: "q1" })],
       });
-      const res = await GET(req("probe=c-123"));
+      mc.getMailchimpSurveyResponses.mockResolvedValue([
+        { id: "r1", contact: { full_name: "Named Person" }, submitted_at: "2026-10-01", answers: [{ question_id: "q1", value: "7" }] },
+        { id: "r2", contact: {}, submitted_at: "2026-10-02", answers: [{ question_id: "q1", value: "5" }] },
+      ]);
+      const res = await GET(req("surveyId=s1"));
       const body = await res.json();
-      expect(body.probe).toBe("c-123");
-      expect(body.endpoints).toHaveLength(7); // campaign-mode: 5 report + 2 surveys list
+      expect(body.responses.map((r) => r.Email).sort()).toEqual(["Anonymous", "Named Person"]);
     });
 
-    it("probes survey endpoints when probe is prefixed with 'survey:'", async () => {
-      global.fetch.mockResolvedValue({
-        status: 200,
-        text: () => Promise.resolve('{"ok":true}'),
+    it("drops options whose label is non-numeric or outside 1-10 (defensive)", async () => {
+      mc.getMailchimpSurveyWithQuestions.mockResolvedValue({
+        ...basics,
+        total_responses: 0,
+        questions: [makeQuestion({
+          options: [
+            { id: "x", label: "not a number", count: 5 },
+            { id: "0", label: "0", count: 3 },
+            { id: "5", label: "5", count: 2 },
+            { id: "11", label: "11", count: 1 },
+            // Option without count — should default to 0
+            { id: "7", label: "7" },
+          ],
+        })],
       });
-      const res = await GET(req("probe=survey:abc"));
+      const res = await GET(req("surveyId=s1"));
       const body = await res.json();
-      expect(body.endpoints.map((e) => e.path)).toEqual(
-        expect.arrayContaining([
-          "/reporting/surveys/abc",
-          "/reporting/surveys/abc/questions",
-          "/reporting/surveys/abc/responses",
-          "/reporting/surveys/abc/responses?count=5",
-        ])
-      );
+      // Only ratings 5 and 7 are in 1..10 range
+      expect(body.distribution.map((d) => d.rating)).toEqual([5, 7]);
+      expect(body.distribution[0].votes).toBe(2);
+      expect(body.distribution[1].votes).toBe(0);
     });
 
-    it("truncates long response bodies to 4000 chars", async () => {
-      const huge = "x".repeat(10000);
-      global.fetch.mockResolvedValue({
-        status: 200,
-        text: () => Promise.resolve(huge),
+    it("handles a question with no options array (returns empty distribution)", async () => {
+      mc.getMailchimpSurveyWithQuestions.mockResolvedValue({
+        ...basics,
+        total_responses: 0,
+        questions: [{ id: "q1", query: "?", type: "range" }],
       });
-      const res = await GET(req("probe=c"));
+      const res = await GET(req("surveyId=s1"));
       const body = await res.json();
-      expect(body.endpoints[0].bodyPreview.length).toBeLessThan(4100);
-      expect(body.endpoints[0].bodyPreview).toMatch(/truncated/);
-    });
-
-    it("captures fetch errors per endpoint without failing the whole probe", async () => {
-      global.fetch.mockRejectedValue(new Error("network down"));
-      const res = await GET(req("probe=c"));
-      const body = await res.json();
-      expect(body.endpoints.every((e) => e.error === "network down")).toBe(true);
+      expect(body.shape).toBe("aggregate");
+      expect(body.distribution).toEqual([]);
     });
   });
 });
