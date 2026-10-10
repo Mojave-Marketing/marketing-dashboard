@@ -6,6 +6,7 @@ jest.mock("../../lib/mailchimp", () => ({
   listMailchimpSurveys: jest.fn(),
   getMailchimpSurveyWithQuestions: jest.fn(),
   getMailchimpSurveyResponses: jest.fn(),
+  getListMemberTags: jest.fn(),
 }));
 
 const mc = require("../../lib/mailchimp");
@@ -38,6 +39,8 @@ describe("GET /api/surveys/email-satisfaction", () => {
     mc.listMailchimpSurveys.mockReset();
     mc.getMailchimpSurveyWithQuestions.mockReset();
     mc.getMailchimpSurveyResponses.mockReset();
+    mc.getListMemberTags.mockReset();
+    mc.getListMemberTags.mockResolvedValue(new Map());
     console.error = jest.fn();
   });
   afterAll(() => {
@@ -101,6 +104,7 @@ describe("GET /api/surveys/email-satisfaction", () => {
     mc.getMailchimpSurveyWithQuestions.mockResolvedValue({
       id: "s1",
       title: "Rating",
+      list_id: "list-1",
       total_responses: 2,
       questions: [makeQuestion({ id: "q1" })],
     });
@@ -117,6 +121,70 @@ describe("GET /api/surveys/email-satisfaction", () => {
     expect(body.responses[0].Rating).toBe(4);
     expect(body.responses[1].Email).toBe("a@x.com");
     expect(body.responses[1].Rating).toBe(9);
+  });
+
+  it("enriches responses with Tags and emits byTag aggregation", async () => {
+    mc.listMailchimpSurveys.mockResolvedValue([
+      { id: "s1", title: "Rating", status: "published", published_at: "2026-10-01T00:00:00Z" },
+    ]);
+    mc.getMailchimpSurveyWithQuestions.mockResolvedValue({
+      id: "s1",
+      title: "Rating",
+      list_id: "list-1",
+      total_responses: 3,
+      questions: [makeQuestion({ id: "q1" })],
+    });
+    mc.getMailchimpSurveyResponses.mockResolvedValue([
+      { id: "r1", contact: { email_address: "A@x.com" }, submitted_at: "2026-10-01", answers: [{ question_id: "q1", value: "9" }] },
+      { id: "r2", contact: { email_address: "b@x.com" }, submitted_at: "2026-10-02", answers: [{ question_id: "q1", value: "7" }] },
+      { id: "r3", contact: { email_address: "c@x.com" }, submitted_at: "2026-10-03", answers: [{ question_id: "q1", value: "3" }] },
+    ]);
+    mc.getListMemberTags.mockResolvedValue(new Map([
+      ["a@x.com", ["VIP", "Contractor"]],
+      ["b@x.com", ["Contractor"]],
+      // c@x.com not in the map
+    ]));
+
+    const res = await GET(req());
+    const body = await res.json();
+    expect(body.responses.find((r) => r.Email === "A@x.com").Tags).toEqual(["VIP", "Contractor"]);
+    expect(body.responses.find((r) => r.Email === "c@x.com").Tags).toEqual([]);
+
+    const byTag = Object.fromEntries(body.byTag.map((g) => [g.tag, g]));
+    // Contractor: a (9) + b (7) = avg 8, 2 votes
+    expect(byTag["Contractor"].votes).toBe(2);
+    expect(byTag["Contractor"].avg).toBeCloseTo(8);
+    // VIP: a (9) only = avg 9, 1 vote
+    expect(byTag["VIP"].votes).toBe(1);
+    expect(byTag["VIP"].avg).toBe(9);
+    // c had no tags → "(no tag)"
+    expect(byTag["(no tag)"].votes).toBe(1);
+    expect(byTag["(no tag)"].avg).toBe(3);
+    // Sorted by votes desc
+    expect(body.byTag[0].tag).toBe("Contractor");
+  });
+
+  it("still returns per-recipient when the tags lookup fails", async () => {
+    mc.listMailchimpSurveys.mockResolvedValue([
+      { id: "s1", title: "Rating", status: "published", published_at: "2026-10-01T00:00:00Z" },
+    ]);
+    mc.getMailchimpSurveyWithQuestions.mockResolvedValue({
+      id: "s1",
+      title: "Rating",
+      list_id: "list-1",
+      total_responses: 1,
+      questions: [makeQuestion({ id: "q1" })],
+    });
+    mc.getMailchimpSurveyResponses.mockResolvedValue([
+      { id: "r1", contact: { email_address: "a@x" }, submitted_at: "2026-10-01", answers: [{ question_id: "q1", value: "5" }] },
+    ]);
+    mc.getListMemberTags.mockRejectedValue(new Error("tags fetch failed"));
+
+    const res = await GET(req());
+    const body = await res.json();
+    expect(body.shape).toBe("per-recipient");
+    expect(body.responses[0].Tags).toEqual([]);
+    expect(body.byTag).toEqual([{ tag: "(no tag)", votes: 1, avg: 5 }]);
   });
 
   it("falls back to aggregate when total_responses>0 but no per-recipient rows resolve", async () => {

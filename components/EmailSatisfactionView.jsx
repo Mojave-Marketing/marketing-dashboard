@@ -8,11 +8,39 @@ function formatDate(iso) {
   });
 }
 
+function TagBreakdownCard({ byTag }) {
+  if (!byTag || byTag.length === 0) return null;
+  return (
+    <div className="card" style={{ padding: 24, marginTop: 20 }}>
+      <h3 style={{ marginBottom: 16 }}>Breakdown by tag</h3>
+      <table className="survey-table">
+        <thead>
+          <tr>
+            <th>Tag</th>
+            <th style={{ textAlign: "right" }}>Avg Score</th>
+            <th style={{ textAlign: "right" }}>Votes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {byTag.map((g) => (
+            <tr key={g.tag}>
+              <td>{g.tag}</td>
+              <td style={{ textAlign: "right" }}>{g.avg.toFixed(1)}</td>
+              <td style={{ textAlign: "right" }}>{g.votes}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function PerRecipientTable({ data }) {
   const avg = data.responses.length
     ? data.responses.reduce((s, r) => s + Number(r.Rating), 0) / data.responses.length
     : 0;
   const latest = data.responses[0]?._receivedAt;
+  const anyTags = data.responses.some((r) => Array.isArray(r.Tags) && r.Tags.length > 0);
 
   return (
     <div className="survey-table-wrap">
@@ -39,6 +67,7 @@ function PerRecipientTable({ data }) {
             <tr>
               <th>Respondent</th>
               <th>Rating</th>
+              {anyTags && <th>Tags</th>}
               <th>Voted</th>
             </tr>
           </thead>
@@ -58,12 +87,21 @@ function PerRecipientTable({ data }) {
                     {r.Rating}
                   </span>
                 </td>
+                {anyTags && (
+                  <td>
+                    {Array.isArray(r.Tags) && r.Tags.length > 0
+                      ? r.Tags.join(", ")
+                      : <span className="contacts-zero">—</span>}
+                  </td>
+                )}
                 <td className="contacts-date">{formatDate(r._receivedAt)}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      <TagBreakdownCard byTag={data.byTag} />
     </div>
   );
 }

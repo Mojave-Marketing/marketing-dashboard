@@ -12,6 +12,7 @@ let getListMemberProfiles;
 let listMailchimpSurveys;
 let getMailchimpSurveyWithQuestions;
 let getMailchimpSurveyResponses;
+let getListMemberTags;
 
 const originalFetch = global.fetch;
 
@@ -37,6 +38,7 @@ beforeEach(() => {
   listMailchimpSurveys = mod.listMailchimpSurveys;
   getMailchimpSurveyWithQuestions = mod.getMailchimpSurveyWithQuestions;
   getMailchimpSurveyResponses = mod.getMailchimpSurveyResponses;
+  getListMemberTags = mod.getListMemberTags;
 
   global.fetch = jest.fn();
   process.env.MAILCHIMP_API_KEY = "test-api-key-us21";
@@ -313,6 +315,54 @@ describe("getMailchimpSurveyResponses", () => {
     mockFetchOnce({ responses: [{ id: "r1" }] });
     await getMailchimpSurveyResponses("s-cache");
     await getMailchimpSurveyResponses("s-cache");
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("getListMemberTags", () => {
+  it("returns a Map<lowercase email → tag names>", async () => {
+    mockFetchOnce({
+      members: [
+        { email_address: "A@EXAMPLE.COM", tags: [{ id: 1, name: "VIP" }, { id: 2, name: "Contractor" }] },
+        { email_address: "b@example.com", tags: [{ id: 3, name: "Owner" }] },
+        { email_address: "c@example.com", tags: [] },
+      ],
+    });
+    const tags = await getListMemberTags("list-1");
+    expect(tags.get("a@example.com")).toEqual(["VIP", "Contractor"]);
+    expect(tags.get("b@example.com")).toEqual(["Owner"]);
+    expect(tags.get("c@example.com")).toEqual([]);
+  });
+
+  it("handles members where tags is missing or not an array", async () => {
+    mockFetchOnce({
+      members: [
+        { email_address: "x@y.z" }, // no tags field
+        { email_address: "a@b.c", tags: "weird-non-array-value" },
+      ],
+    });
+    const tags = await getListMemberTags("list-2");
+    expect(tags.get("x@y.z")).toEqual([]);
+    expect(tags.get("a@b.c")).toEqual([]);
+  });
+
+  it("paginates until a short page is returned", async () => {
+    const batch = Array.from({ length: 1000 }, (_, i) => ({
+      email_address: `u${i}@x`,
+      tags: [{ id: 1, name: "T" }],
+    }));
+    mockFetchOnce({ members: batch });
+    mockFetchOnce({ members: [{ email_address: "last@x", tags: [] }] });
+    const tags = await getListMemberTags("list-3");
+    expect(tags.size).toBe(1001);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(global.fetch.mock.calls[1][0]).toContain("offset=1000");
+  });
+
+  it("caches by list id", async () => {
+    mockFetchOnce({ members: [{ email_address: "a@b", tags: [] }] });
+    await getListMemberTags("list-cache");
+    await getListMemberTags("list-cache");
     expect(global.fetch).toHaveBeenCalledTimes(1);
   });
 });

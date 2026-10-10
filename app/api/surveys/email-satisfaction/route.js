@@ -3,6 +3,7 @@ import {
   listMailchimpSurveys,
   getMailchimpSurveyWithQuestions,
   getMailchimpSurveyResponses,
+  getListMemberTags,
 } from "../../../../lib/mailchimp";
 
 // Returns the latest published Mailchimp Survey + its responses, normalized
@@ -63,12 +64,19 @@ export async function GET(request) {
     const normalized = normalizeResponses(responses, question);
 
     if (normalized.length > 0) {
+      // Enrich with tags from the audience.
+      const tagsByEmail = await getListMemberTags(survey.list_id).catch(() => new Map());
+      for (const row of normalized) {
+        const key = typeof row.Email === "string" ? row.Email.toLowerCase() : "";
+        row.Tags = tagsByEmail.get(key) || [];
+      }
       return NextResponse.json({
         shape: "per-recipient",
         survey: { id: survey.id, title: survey.title, publishedAt: survey.published_at },
         question: { id: question.id, query: question.query, type: question.type },
         responses: normalized,
         total: normalized.length,
+        byTag: aggregateByTag(normalized),
       });
     }
 
@@ -105,6 +113,25 @@ function aggregateFromOptions(question) {
     .map((o) => ({ rating: Number(o.label ?? o.id), votes: Number(o.count || 0) }))
     .filter((d) => Number.isFinite(d.rating) && d.rating >= 1 && d.rating <= 10)
     .sort((a, b) => a.rating - b.rating);
+}
+
+// Groups rated responses by tag. A response with multiple tags contributes to
+// each tag's count (standard overlapping-group behavior). Responses with no
+// tags are grouped under "(no tag)" so they're still visible.
+function aggregateByTag(rows) {
+  const groups = new Map();
+  for (const row of rows) {
+    const tags = Array.isArray(row.Tags) && row.Tags.length > 0 ? row.Tags : ["(no tag)"];
+    for (const tag of tags) {
+      if (!groups.has(tag)) groups.set(tag, { tag, votes: 0, sum: 0 });
+      const g = groups.get(tag);
+      g.votes += 1;
+      g.sum += Number(row.Rating);
+    }
+  }
+  return [...groups.values()]
+    .map((g) => ({ tag: g.tag, votes: g.votes, avg: g.sum / g.votes }))
+    .sort((a, b) => b.votes - a.votes);
 }
 
 function normalizeResponses(responses, question) {

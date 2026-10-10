@@ -45,9 +45,10 @@ describe("EmailSatisfactionView", () => {
       shape: "per-recipient",
       total: 2,
       responses: [
-        { Email: "a@x.com", Rating: 9, _receivedAt: "2026-10-01T00:00:00Z" },
-        { Email: "b@x.com", Rating: 4, _receivedAt: "2026-09-01T00:00:00Z" },
+        { Email: "a@x.com", Rating: 9, Tags: [], _receivedAt: "2026-10-01T00:00:00Z" },
+        { Email: "b@x.com", Rating: 4, Tags: [], _receivedAt: "2026-09-01T00:00:00Z" },
       ],
+      byTag: [],
       survey: { id: "s1", title: "Contractor Rating Survey", publishedAt: "2026-10-01T00:00:00Z" },
       question: { id: "q1", query: "Rate your experience 1-10", type: "range" },
     });
@@ -60,6 +61,47 @@ describe("EmailSatisfactionView", () => {
     expect(screen.getByText(/Rate your experience 1-10/)).toBeInTheDocument();
     expect(screen.getByText(/Avg Score \(out of 10\)/)).toBeInTheDocument();
     expect(screen.getByText("6.5")).toBeInTheDocument(); // (9 + 4) / 2
+  });
+
+  it("shows Tags column and Breakdown-by-tag card when responses carry tags", async () => {
+    mockApi({
+      shape: "per-recipient",
+      total: 3,
+      responses: [
+        { Email: "a@x.com", Rating: 9, Tags: ["VIP", "Contractor"], _receivedAt: "2026-10-03" },
+        { Email: "b@x.com", Rating: 7, Tags: ["Contractor"], _receivedAt: "2026-10-02" },
+        { Email: "c@x.com", Rating: 3, Tags: [], _receivedAt: "2026-10-01" },
+      ],
+      byTag: [
+        { tag: "Contractor", votes: 2, avg: 8 },
+        { tag: "VIP", votes: 1, avg: 9 },
+        { tag: "(no tag)", votes: 1, avg: 3 },
+      ],
+      survey: { id: "s1", title: "Rating", publishedAt: "2026-10-01" },
+      question: { id: "q1", query: "Rate us", type: "range" },
+    });
+    render(<EmailSatisfactionView />);
+    await waitFor(() => expect(screen.getByText(/Breakdown by tag/)).toBeInTheDocument());
+    expect(screen.getByText("VIP, Contractor")).toBeInTheDocument();
+    expect(screen.getAllByText("Contractor").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("(no tag)")).toBeInTheDocument();
+    // Avg values rendered to one decimal
+    expect(screen.getByText("8.0")).toBeInTheDocument(); // Contractor avg
+    expect(screen.getByText("9.0")).toBeInTheDocument(); // VIP avg
+  });
+
+  it("omits the Tags column entirely when no response has tags", async () => {
+    mockApi({
+      shape: "per-recipient",
+      total: 1,
+      responses: [{ Email: "a@x.com", Rating: 7, Tags: [], _receivedAt: "2026-10-01" }],
+      byTag: [{ tag: "(no tag)", votes: 1, avg: 7 }],
+      survey: { id: "s1", title: "Rating", publishedAt: "2026-10-01" },
+      question: { id: "q1", query: "?", type: "range" },
+    });
+    render(<EmailSatisfactionView />);
+    await waitFor(() => expect(screen.getByText("a@x.com")).toBeInTheDocument());
+    expect(screen.queryByRole("columnheader", { name: "Tags" })).not.toBeInTheDocument();
   });
 
   it("renders the aggregate distribution view when shape is 'aggregate'", async () => {
