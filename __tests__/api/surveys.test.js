@@ -148,6 +148,28 @@ describe("GET /api/surveys/[formId]", () => {
     expect(body.responses[0].respondentEmail).toBe("real@user.com");
   });
 
+  it("?raw=1 returns filtered-out sample responses too (diagnostic)", async () => {
+    mockList.mockResolvedValue({
+      blobs: [{ pathname: "surveys/f/1.json", url: "https://blob/1.json" }],
+    });
+    mockGet.mockResolvedValueOnce({
+      statusCode: 200,
+      stream: streamOf({
+        "04c09205": "sample text question answer",
+        _receivedAt: "2026-10-01T00:00:00Z",
+      }),
+      headers: new Headers(),
+      blob: {},
+    });
+
+    const req = new Request("http://localhost:3000/api/surveys/f?raw=1");
+    const res = await GET(req, { params: { formId: "f" } });
+    const body = await res.json();
+    expect(body.raw).toBe(true);
+    expect(body.total).toBe(1);
+    expect(body.responses[0]["04c09205"]).toBe("sample text question answer");
+  });
+
   it("returns 500 when the blob list call throws", async () => {
     const originalError = console.error;
     console.error = jest.fn();

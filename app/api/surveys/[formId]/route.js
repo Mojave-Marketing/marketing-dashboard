@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 
 export async function GET(request, { params }) {
   const { formId } = params;
+  const { searchParams } = new URL(request.url);
+  const raw = searchParams.get("raw") === "1";
 
   if (!process.env.BLOB_READ_WRITE_TOKEN) {
     return NextResponse.json({ responses: [], total: 0, unconfigured: true });
@@ -22,12 +24,15 @@ export async function GET(request, { params }) {
       })
     );
 
-    const valid = responses
+    // ?raw=1 — diagnostic: return everything including filtered sample
+    // responses, so UUID field keys and their values are visible for
+    // mapping to real question text.
+    const base = responses
       .filter(Boolean)
-      .filter(isNotGoogleFormsSample)
       .sort((a, b) => new Date(b._receivedAt) - new Date(a._receivedAt));
+    const valid = raw ? base : base.filter(isNotGoogleFormsSample);
 
-    return NextResponse.json({ responses: valid, total: valid.length });
+    return NextResponse.json({ responses: valid, total: valid.length, ...(raw ? { raw: true } : {}) });
   } catch (err) {
     console.error(err);
     return NextResponse.json(
