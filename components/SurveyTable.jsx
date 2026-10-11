@@ -122,7 +122,9 @@ export default function SurveyTable({ formId }) {
       <div className="survey-empty">
         <p className="survey-empty-title">No form submissions yet</p>
         <p className="survey-empty-sub">
-          Submissions will appear here as they come in through Zapier.
+          These forms are hosted in Google Forms under{" "}
+          <strong>info@mojavehvac.com</strong> and land in the Marketing
+          Command Center via Zapier automation once a submission comes through.
         </p>
       </div>
     );
