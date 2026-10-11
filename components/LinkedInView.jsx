@@ -40,12 +40,12 @@ export default function LinkedInView() {
   return (
     <>
       <div className="kpi-grid" style={{ marginBottom: "24px" }}>
-        <div className="card">
-          <div className="kpi-label">Followers</div>
-          <div className="kpi-value">
-            {profile.followers != null ? profile.followers.toLocaleString() : "—"}
+        {profile.followers != null && (
+          <div className="card">
+            <div className="kpi-label">Followers</div>
+            <div className="kpi-value">{profile.followers.toLocaleString()}</div>
           </div>
-        </div>
+        )}
         <div className="card">
           <div className="kpi-label">Avg impressions / post</div>
           <div className="kpi-value">{summary.avgImpressions.toLocaleString()}</div>

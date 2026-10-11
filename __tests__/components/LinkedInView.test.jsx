@@ -65,6 +65,17 @@ describe("LinkedInView", () => {
     expect(screen.getAllByText("6.5%").length).toBeGreaterThanOrEqual(1);
   });
 
+  it("hides the Followers KPI card when profile.followers is null", async () => {
+    mockApi({
+      profile: { name: "Mojave", followers: null },
+      posts: [],
+      summary: { postsAnalyzed: 0, totalPostsFetched: 0, avgImpressions: 0, totalClicks: 0, avgEngagementRate: 0 },
+    });
+    render(<LinkedInView />);
+    await waitFor(() => expect(screen.getByText(/Avg impressions \/ post/)).toBeInTheDocument());
+    expect(screen.queryByText("Followers")).not.toBeInTheDocument();
+  });
+
   it("truncates long post text at 80 chars", async () => {
     const longText = "x".repeat(200);
     mockApi({
