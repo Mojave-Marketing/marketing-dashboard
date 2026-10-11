@@ -15,8 +15,34 @@ import {
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const surveyIdParam = searchParams.get("surveyId");
+  const probeSegments = searchParams.get("probeSegments");
 
   try {
+    // Probe mode: list audience segments to see if inline poll clicks
+    // auto-generate segments we can read for per-recipient data.
+    if (probeSegments) {
+      const listId = probeSegments;
+      const apiKey = process.env.MAILCHIMP_API_KEY;
+      const prefix = process.env.MAILCHIMP_SERVER_PREFIX;
+      const auth = "Basic " + Buffer.from(`anystring:${apiKey}`).toString("base64");
+      const res = await fetch(
+        `https://${prefix}.api.mailchimp.com/3.0/lists/${listId}/segments?count=100`,
+        { headers: { Authorization: auth }, cache: "no-store" }
+      );
+      const data = await res.json();
+      // Return a trimmed shape — just the fields relevant to deciding whether
+      // auto-poll-segments exist.
+      const segments = (data.segments || []).map((s) => ({
+        id: s.id,
+        name: s.name,
+        type: s.type,
+        member_count: s.member_count,
+        created_at: s.created_at,
+        updated_at: s.updated_at,
+      }));
+      return NextResponse.json({ probeSegments: listId, totalItems: data.total_items, segments });
+    }
+
     let surveyId = surveyIdParam;
     if (!surveyId) {
       const surveys = await listMailchimpSurveys();

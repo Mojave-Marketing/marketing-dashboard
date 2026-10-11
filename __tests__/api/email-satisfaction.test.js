@@ -251,6 +251,58 @@ describe("GET /api/surveys/email-satisfaction", () => {
     expect(body.error).toMatch(/mailchimp down/);
   });
 
+  describe("?probeSegments=<listId>", () => {
+    const originalKey = process.env.MAILCHIMP_API_KEY;
+    const originalPrefix = process.env.MAILCHIMP_SERVER_PREFIX;
+    const originalFetch = global.fetch;
+    beforeEach(() => {
+      process.env.MAILCHIMP_API_KEY = "test-key";
+      process.env.MAILCHIMP_SERVER_PREFIX = "us18";
+      global.fetch = jest.fn();
+    });
+    afterAll(() => {
+      process.env.MAILCHIMP_API_KEY = originalKey;
+      process.env.MAILCHIMP_SERVER_PREFIX = originalPrefix;
+      global.fetch = originalFetch;
+    });
+
+    it("returns trimmed segment list for the given listId", async () => {
+      global.fetch.mockResolvedValue({
+        status: 200,
+        json: () => Promise.resolve({
+          segments: [
+            { id: 1, name: "VIP", type: "saved", member_count: 10, created_at: "2026-01-01", updated_at: "2026-10-01", extra: "noise" },
+          ],
+          total_items: 1,
+        }),
+      });
+      const res = await GET(req("probeSegments=list-42"));
+      const body = await res.json();
+      expect(body.probeSegments).toBe("list-42");
+      expect(body.totalItems).toBe(1);
+      expect(body.segments[0]).toEqual({
+        id: 1,
+        name: "VIP",
+        type: "saved",
+        member_count: 10,
+        created_at: "2026-01-01",
+        updated_at: "2026-10-01",
+      });
+      // Noise field should be stripped
+      expect(body.segments[0]).not.toHaveProperty("extra");
+    });
+
+    it("handles missing segments field gracefully", async () => {
+      global.fetch.mockResolvedValue({
+        status: 200,
+        json: () => Promise.resolve({}),
+      });
+      const res = await GET(req("probeSegments=list-empty"));
+      const body = await res.json();
+      expect(body.segments).toEqual([]);
+    });
+  });
+
   describe("edge-case normalization", () => {
     const basics = {
       id: "s1",
