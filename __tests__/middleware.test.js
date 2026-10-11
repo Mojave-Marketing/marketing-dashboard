@@ -44,8 +44,6 @@ describe("middleware", () => {
       ["/login/anything"],
       ["/api/login"],
       ["/api/webhooks/form/foo"],
-      ["/api/auth/buffer"],
-      ["/api/auth/buffer/callback"],
     ])("allows %s through without a session cookie", async (path) => {
       const res = await middleware(buildRequest(path));
       // NextResponse.next() has no Location header; a redirect would.

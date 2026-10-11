@@ -6,15 +6,44 @@ let getLinkedInProfile;
 let getLinkedInPosts;
 const originalFetch = global.fetch;
 
-function mockFetchOnce(body, { status = 200 } = {}) {
+// Each lib call either hits the GraphQL endpoint once (if the org id is
+// already cached) or twice (once for account/organizations, once for the
+// actual query). The helper lets each test enqueue specific responses.
+function mockGraphQLOnce(data) {
+  global.fetch.mockImplementationOnce(() =>
+    Promise.resolve({
+      ok: true,
+      status: 200,
+      text: () => Promise.resolve(JSON.stringify({ data })),
+      json: () => Promise.resolve({ data }),
+    })
+  );
+}
+
+function mockGraphQLErrorOnce({ status = 200, errors } = {}) {
   global.fetch.mockImplementationOnce(() =>
     Promise.resolve({
       ok: status >= 200 && status < 300,
       status,
-      text: () => Promise.resolve(JSON.stringify(body)),
-      json: () => Promise.resolve(body),
+      text: () => Promise.resolve(JSON.stringify({ errors })),
+      json: () => Promise.resolve({ errors }),
     })
   );
+}
+
+function mockHttpErrorOnce(status, body) {
+  global.fetch.mockImplementationOnce(() =>
+    Promise.resolve({
+      ok: false,
+      status,
+      text: () => Promise.resolve(body),
+      json: () => Promise.resolve({}),
+    })
+  );
+}
+
+function mockOrgFetchOnce(orgId = "org-123") {
+  mockGraphQLOnce({ account: { organizations: [{ id: orgId, name: "Mojave" }] } });
 }
 
 beforeEach(() => {
@@ -24,116 +53,161 @@ beforeEach(() => {
   getLinkedInPosts = mod.getLinkedInPosts;
 
   global.fetch = jest.fn();
-  process.env.BUFFER_API = "buffer-token-xyz";
+  process.env.BUFFER_API = "test-personal-api-key";
 });
 
 afterAll(() => {
   global.fetch = originalFetch;
 });
 
-describe("getLinkedInProfile", () => {
+describe("getLinkedInProfile (GraphQL)", () => {
   it("throws when BUFFER_API is missing", async () => {
     delete process.env.BUFFER_API;
     await expect(getLinkedInProfile()).rejects.toThrow(/BUFFER_API/);
   });
 
-  it("returns null when no LinkedIn profile is connected in Buffer", async () => {
-    mockFetchOnce([{ id: "x", service: "twitter" }]);
+  it("posts to https://api.buffer.com with a Bearer token", async () => {
+    mockOrgFetchOnce();
+    mockGraphQLOnce({ channels: [{ id: "c1", name: "Mojave", service: "linkedin" }] });
+    await getLinkedInProfile();
+    const [url, opts] = global.fetch.mock.calls[0];
+    expect(url).toBe("https://api.buffer.com");
+    expect(opts.method).toBe("POST");
+    expect(opts.headers.Authorization).toBe("Bearer test-personal-api-key");
+    expect(opts.headers["Content-Type"]).toBe("application/json");
+  });
+
+  it("resolves the organization id before querying channels", async () => {
+    mockOrgFetchOnce("org-abc");
+    mockGraphQLOnce({ channels: [{ id: "ch", name: "Mojave", service: "linkedin" }] });
+    await getLinkedInProfile();
+    // Second request should carry the orgId variable we just fetched
+    const secondBody = JSON.parse(global.fetch.mock.calls[1][1].body);
+    expect(secondBody.variables.orgId).toBe("org-abc");
+    expect(secondBody.query).toContain("channels");
+  });
+
+  it("returns null when the organization has no LinkedIn channel", async () => {
+    mockOrgFetchOnce();
+    mockGraphQLOnce({ channels: [{ id: "x", name: "Twitter", service: "twitter" }] });
     await expect(getLinkedInProfile()).resolves.toBeNull();
   });
 
-  it("picks the service='linkedin' profile", async () => {
-    mockFetchOnce([
-      { id: "t", service: "twitter", service_username: "foo", statistics: { followers: 5 } },
-      {
-        id: "li",
-        service: "linkedin",
-        service_username: "mojave",
-        statistics: { followers: 1234 },
-      },
-    ]);
-    await expect(getLinkedInProfile()).resolves.toEqual({
-      id: "li",
-      name: "mojave",
-      followers: 1234,
+  it("matches 'linkedin' and any linkedin-prefixed service (e.g. linkedinPage)", async () => {
+    mockOrgFetchOnce();
+    mockGraphQLOnce({ channels: [{ id: "ch", name: "Mojave LinkedIn", service: "linkedinPage" }] });
+    const profile = await getLinkedInProfile();
+    expect(profile.id).toBe("ch");
+    expect(profile.name).toBe("Mojave LinkedIn");
+  });
+
+  it("returns followers: null since the GraphQL API doesn't expose it", async () => {
+    mockOrgFetchOnce();
+    mockGraphQLOnce({ channels: [{ id: "ch", name: "x", service: "linkedin" }] });
+    const profile = await getLinkedInProfile();
+    expect(profile.followers).toBeNull();
+  });
+
+  it("caches the profile between calls", async () => {
+    mockOrgFetchOnce();
+    mockGraphQLOnce({ channels: [{ id: "ch", name: "x", service: "linkedin" }] });
+    await getLinkedInProfile();
+    await getLinkedInProfile();
+    expect(global.fetch).toHaveBeenCalledTimes(2); // org + channels, then cache hit
+  });
+
+  it("throws when the account has no organizations", async () => {
+    mockGraphQLOnce({ account: { organizations: [] } });
+    await expect(getLinkedInProfile()).rejects.toThrow(/No Buffer organizations/);
+  });
+
+  it("surfaces GraphQL errors with their message", async () => {
+    mockGraphQLErrorOnce({
+      errors: [{ message: "Unauthorized" }],
     });
+    await expect(getLinkedInProfile()).rejects.toThrow(/Unauthorized/);
   });
 
-  it("also accepts service='linkedin-business'", async () => {
-    mockFetchOnce([
-      { id: "li2", service: "linkedin-business", formatted_username: "Mojave HVAC", statistics: {} },
-    ]);
-    const p = await getLinkedInProfile();
-    expect(p.id).toBe("li2");
-    expect(p.name).toBe("Mojave HVAC");
-    expect(p.followers).toBeNull();
-  });
-
-  it("caches the profile result", async () => {
-    mockFetchOnce([{ id: "li", service: "linkedin", statistics: { followers: 1 } }]);
-    await getLinkedInProfile();
-    await getLinkedInProfile();
-    expect(global.fetch).toHaveBeenCalledTimes(1);
-  });
-
-  it("includes access_token in the URL", async () => {
-    mockFetchOnce([{ id: "li", service: "linkedin", statistics: {} }]);
-    await getLinkedInProfile();
-    expect(global.fetch.mock.calls[0][0]).toContain("access_token=buffer-token-xyz");
+  it("surfaces HTTP errors with status", async () => {
+    mockHttpErrorOnce(401, "{\"error\":\"token revoked\"}");
+    await expect(getLinkedInProfile()).rejects.toThrow(/401/);
   });
 });
 
-describe("getLinkedInPosts", () => {
-  it("maps Buffer update fields to the post shape", async () => {
-    const sentAt = 1_700_000_000; // seconds
-    mockFetchOnce({
-      updates: [
-        {
-          id: "u1",
-          text: "Hello world",
-          sent_at: sentAt,
-          statistics: {
-            reach: 500,
-            clicks: 25,
-            favorites: 10,
-            comments: 2,
-            retweets: 3,
+describe("getLinkedInPosts (GraphQL)", () => {
+  it("maps edges.node to the dashboard post shape", async () => {
+    mockOrgFetchOnce();
+    mockGraphQLOnce({
+      posts: {
+        edges: [
+          {
+            node: {
+              id: "p1",
+              text: "Hello HVAC world",
+              sentAt: "2026-10-01T00:00:00Z",
+              reactions: 12,
+              comments: 3,
+              impressions: 1000,
+              engagementRate: 0.018,
+              metrics: [
+                { type: "clicks", value: 25, name: "Link clicks" },
+                { type: "shares", value: 4, name: "Reshares" },
+              ],
+            },
           },
-        },
-      ],
+        ],
+      },
     });
 
-    const posts = await getLinkedInPosts("profile-id", 25);
+    const posts = await getLinkedInPosts("ch-123", 25);
     expect(posts).toEqual([
       {
-        id: "u1",
-        text: "Hello world",
-        sentAt: new Date(sentAt * 1000).toISOString(),
-        stats: { impressions: 500, clicks: 25, reactions: 10, comments: 2, shares: 3 },
+        id: "p1",
+        text: "Hello HVAC world",
+        sentAt: "2026-10-01T00:00:00Z",
+        stats: { impressions: 1000, clicks: 25, reactions: 12, comments: 3, shares: 4 },
       },
     ]);
   });
 
-  it("handles bare-array response shape", async () => {
-    mockFetchOnce([
-      { id: "u2", text: "", sent_at: null, statistics: {} },
-    ]);
-    const posts = await getLinkedInPosts("profile-id");
-    expect(posts).toHaveLength(1);
-    expect(posts[0].sentAt).toBeNull();
-    expect(posts[0].stats).toEqual({ impressions: 0, clicks: 0, reactions: 0, comments: 0, shares: 0 });
+  it("passes channelId and first count as GraphQL variables", async () => {
+    mockOrgFetchOnce();
+    mockGraphQLOnce({ posts: { edges: [] } });
+    await getLinkedInPosts("ch-xyz", 10);
+    const body = JSON.parse(global.fetch.mock.calls[1][1].body);
+    expect(body.variables.channelId).toBe("ch-xyz");
+    expect(body.variables.first).toBe(10);
+    expect(body.query).toContain("posts(");
   });
 
-  it("caches posts per profileId", async () => {
-    mockFetchOnce({ updates: [] });
-    await getLinkedInPosts("p1");
-    await getLinkedInPosts("p1");
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+  it("defaults missing metrics to 0 and tolerates missing fields", async () => {
+    mockOrgFetchOnce();
+    mockGraphQLOnce({
+      posts: { edges: [{ node: { id: "p", text: "", sentAt: null, metrics: [] } }] },
+    });
+    const [post] = await getLinkedInPosts("ch", 5);
+    expect(post.stats).toEqual({ impressions: 0, clicks: 0, reactions: 0, comments: 0, shares: 0 });
+    expect(post.sentAt).toBeNull();
   });
 
-  it("passes count in the query string", async () => {
-    mockFetchOnce({ updates: [] });
-    await getLinkedInPosts("p2", 10);
-    expect(global.fetch.mock.calls[0][0]).toContain("count=10");
+  it("accepts 'linkclicks' as an alternate clicks metric name", async () => {
+    mockOrgFetchOnce();
+    mockGraphQLOnce({
+      posts: {
+        edges: [
+          { node: { id: "p", text: "", sentAt: null, impressions: 100, metrics: [{ type: "linkclicks", value: 7 }] } },
+        ],
+      },
+    });
+    const [post] = await getLinkedInPosts("ch", 5);
+    expect(post.stats.clicks).toBe(7);
+  });
+
+  it("caches posts by channelId", async () => {
+    mockOrgFetchOnce();
+    mockGraphQLOnce({ posts: { edges: [] } });
+    await getLinkedInPosts("ch-cache", 5);
+    await getLinkedInPosts("ch-cache", 5);
+    expect(global.fetch).toHaveBeenCalledTimes(2); // org + posts, then cache hit
   });
 });

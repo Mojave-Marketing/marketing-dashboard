@@ -70,7 +70,6 @@ cookie on every request. There is no role distinction and no admin-only routing.
 Public paths that bypass the gate (whitelisted in `middleware.js`):
 - `/login`, `/api/login` — the auth flow itself
 - `/api/webhooks/*` — Zapier submissions (auth is via `WEBHOOK_SECRET` query param)
-- `/api/auth/buffer*` — Buffer OAuth callback
 - `/logo.jpg` — brand mark used by the login page
 
 ### Key Files
@@ -116,9 +115,7 @@ Public paths that bypass the gate (whitelisted in `middleware.js`):
 | `BLOB_READ_WRITE_TOKEN` | Yes (Surveys) | Vercel Blob token for survey response storage |
 | `WEBHOOK_SECRET` | Yes (Surveys) | Shared secret for Zapier webhook POSTs |
 | `WEBHOOK_FORMS` | No | JSON array override: `[{id, name}]` for survey nav items |
-| `BUFFER_CLIENT_ID` | Yes (LinkedIn) | Buffer OAuth app client ID |
-| `BUFFER_SECRET_ID` | Yes (LinkedIn) | Buffer OAuth app client secret |
-| `BUFFER_API` | Yes (LinkedIn) | Buffer access token — obtained via `/api/auth/buffer` one-time flow |
+| `BUFFER_API` | Yes (LinkedIn) | Buffer **personal API key** generated at https://publish.buffer.com/settings/api — passed as a Bearer token to the GraphQL API |
 | `ANTHROPIC_API_KEY` | Planned (AI summaries) | Claude API for campaign narrative summaries |
 | `GA4_PROPERTY_ID` | Planned (Website Analytics) | Google Analytics 4 property ID |
 | `GOOGLE_SERVICE_ACCOUNT_KEY` | Planned (GA4) | Base64-encoded service account JSON |
@@ -262,12 +259,17 @@ Answer all of these before writing any code for a new feature:
   convert the pre-refactor aggregated shape (`surveys/{formId}.json`) to the
   per-submission shape
 
-### LinkedIn Analytics (Buffer API) — Live
+### LinkedIn Analytics (Buffer GraphQL API) — Live
 
-- Uses the Buffer public API via `lib/buffer.js`
-- One-time OAuth flow: visit `/api/auth/buffer` while logged in to authorize, the
-  callback at `/api/auth/buffer/callback` displays the access token, paste it into
-  Vercel as `BUFFER_API`, redeploy
+- Uses Buffer's GraphQL API at `https://api.buffer.com` via `lib/buffer.js`
+- Buffer deprecated the legacy REST API (`api.bufferapp.com/1/*`) in late 2026;
+  public tokens no longer work. The migration happened in commit history around
+  the switch to GraphQL — see `lib/buffer.js` for the query shapes.
+- Setup: generate a **personal API key** at https://publish.buffer.com/settings/api
+  while signed into Buffer, paste it into Vercel as `BUFFER_API`, redeploy.
+- No OAuth flow — Buffer hasn't enabled third-party OAuth on the new API yet.
+- Call sequence: `account.organizations[0].id` → `channels(organizationId)` →
+  find LinkedIn channel → `posts(organizationId, channelIds)` for sent posts
 - Pulls profile stats (followers) and the last 25 sent posts (impressions, clicks,
   reactions, comments, shares)
 - Engagement rate computed as `(reactions + comments + shares + clicks) / impressions`
