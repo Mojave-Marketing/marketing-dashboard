@@ -135,7 +135,7 @@ describe("getLinkedInProfile (GraphQL)", () => {
 });
 
 describe("getLinkedInPosts (GraphQL)", () => {
-  it("maps edges.node to the dashboard post shape", async () => {
+  it("maps edges.node to the dashboard post shape (all stats from metrics[])", async () => {
     mockOrgFetchOnce();
     mockGraphQLOnce({
       posts: {
@@ -145,11 +145,10 @@ describe("getLinkedInPosts (GraphQL)", () => {
               id: "p1",
               text: "Hello HVAC world",
               sentAt: "2026-10-01T00:00:00Z",
-              reactions: 12,
-              comments: 3,
-              impressions: 1000,
-              engagementRate: 0.018,
               metrics: [
+                { type: "impressions", value: 1000, name: "Impressions" },
+                { type: "reactions", value: 12, name: "Reactions" },
+                { type: "comments", value: 3, name: "Comments" },
                 { type: "clicks", value: 25, name: "Link clicks" },
                 { type: "shares", value: 4, name: "Reshares" },
               ],
@@ -168,6 +167,52 @@ describe("getLinkedInPosts (GraphQL)", () => {
         stats: { impressions: 1000, clicks: 25, reactions: 12, comments: 3, shares: 4 },
       },
     ]);
+  });
+
+  it("falls back across naming conventions (likes/reach/reshares)", async () => {
+    mockOrgFetchOnce();
+    mockGraphQLOnce({
+      posts: {
+        edges: [
+          {
+            node: {
+              id: "p",
+              text: "",
+              sentAt: null,
+              metrics: [
+                { type: "reach", value: 500 },
+                { type: "likes", value: 8 },
+                { type: "reshares", value: 2 },
+              ],
+            },
+          },
+        ],
+      },
+    });
+    const [post] = await getLinkedInPosts("ch", 5);
+    expect(post.stats.impressions).toBe(500);
+    expect(post.stats.reactions).toBe(8);
+    expect(post.stats.shares).toBe(2);
+  });
+
+  it("accepts metric name (not just type) as the key for lookup", async () => {
+    mockOrgFetchOnce();
+    mockGraphQLOnce({
+      posts: {
+        edges: [
+          {
+            node: {
+              id: "p",
+              text: "",
+              sentAt: null,
+              metrics: [{ name: "Link clicks", value: 7 }],
+            },
+          },
+        ],
+      },
+    });
+    const [post] = await getLinkedInPosts("ch", 5);
+    expect(post.stats.clicks).toBe(7);
   });
 
   it("passes channelId and first count as GraphQL variables", async () => {
