@@ -32,7 +32,10 @@ export async function GET(request, { params }) {
       .sort((a, b) => new Date(b._receivedAt) - new Date(a._receivedAt));
     const valid = raw
       ? base
-      : base.filter(isNotGoogleFormsSample).filter(hasRealQuestionKeys);
+      : base
+          .filter(isNotGoogleFormsSample)
+          .filter(hasRealQuestionKeys)
+          .filter(isSubmittedTodayOrLater);
 
     return NextResponse.json({ responses: valid, total: valid.length, ...(raw ? { raw: true } : {}) });
   } catch (err) {
@@ -63,4 +66,15 @@ function isNotGoogleFormsSample(response) {
 function hasRealQuestionKeys(response) {
   if (!response || typeof response !== "object") return true;
   return !Object.keys(response).some((k) => UUID_KEY_RE.test(k));
+}
+
+// Hide anything stored before today (UTC). Pre-production test submissions
+// predate the Zap fix; this is a belt-and-suspenders filter to catch anything
+// the sample-text / UUID-key filters miss.
+function isSubmittedTodayOrLater(response) {
+  const t = response?._receivedAt;
+  if (!t) return false;
+  const startOfToday = new Date();
+  startOfToday.setUTCHours(0, 0, 0, 0);
+  return new Date(t) >= startOfToday;
 }

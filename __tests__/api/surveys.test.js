@@ -29,14 +29,20 @@ function streamOf(obj) {
 describe("GET /api/surveys/[formId]", () => {
   const originalToken = process.env.BLOB_READ_WRITE_TOKEN;
 
+  // Pin "today" so the isSubmittedTodayOrLater filter is deterministic.
+  // Fixtures use dates on 2026-10-15 (today) or later.
+  beforeAll(() => {
+    jest.useFakeTimers().setSystemTime(new Date("2026-10-15T12:00:00Z"));
+  });
+  afterAll(() => {
+    jest.useRealTimers();
+    process.env.BLOB_READ_WRITE_TOKEN = originalToken;
+  });
+
   beforeEach(() => {
     mockList.mockReset();
     mockGet.mockReset();
     process.env.BLOB_READ_WRITE_TOKEN = "vercel_blob_rw_token";
-  });
-
-  afterAll(() => {
-    process.env.BLOB_READ_WRITE_TOKEN = originalToken;
   });
 
   it("returns unconfigured when BLOB_READ_WRITE_TOKEN is unset", async () => {
@@ -68,7 +74,7 @@ describe("GET /api/surveys/[formId]", () => {
       .mockImplementationOnce(() =>
         Promise.resolve({
           statusCode: 200,
-          stream: streamOf({ name: "Old", _receivedAt: "2026-01-01T00:00:00Z" }),
+          stream: streamOf({ name: "Old", _receivedAt: "2026-10-15T06:00:00Z" }),
           headers: new Headers(),
           blob: {},
         })
@@ -76,7 +82,7 @@ describe("GET /api/surveys/[formId]", () => {
       .mockImplementationOnce(() =>
         Promise.resolve({
           statusCode: 200,
-          stream: streamOf({ name: "New", _receivedAt: "2026-09-01T00:00:00Z" }),
+          stream: streamOf({ name: "New", _receivedAt: "2026-10-15T18:00:00Z" }),
           headers: new Headers(),
           blob: {},
         })
@@ -112,7 +118,7 @@ describe("GET /api/surveys/[formId]", () => {
             answer1: "sample text question answer",
             answer2: "sample text question answer",
             respondentEmail: "test@google.com",
-            _receivedAt: "2026-10-01T00:00:00Z",
+            _receivedAt: "2026-10-15T06:00:00Z",
           }),
           headers: new Headers(),
           blob: {},
@@ -124,7 +130,7 @@ describe("GET /api/surveys/[formId]", () => {
           stream: streamOf({
             answer1: "Great training, really enjoyed it",
             respondentEmail: "real@user.com",
-            _receivedAt: "2026-10-02T00:00:00Z",
+            _receivedAt: "2026-10-15T12:00:00Z",
           }),
           headers: new Headers(),
           blob: {},
@@ -135,7 +141,7 @@ describe("GET /api/surveys/[formId]", () => {
           statusCode: 200,
           stream: streamOf({
             answer1: "SAMPLE TEXT QUESTION ANSWER", // case-insensitive match
-            _receivedAt: "2026-10-03T00:00:00Z",
+            _receivedAt: "2026-10-15T18:00:00Z",
           }),
           headers: new Headers(),
           blob: {},
@@ -163,7 +169,7 @@ describe("GET /api/surveys/[formId]", () => {
             "04c09205": "Yes",
             "4a0b34cc": "Great training",
             respondentEmail: "pre-fix@user.com",
-            _receivedAt: "2026-10-01T00:00:00Z",
+            _receivedAt: "2026-10-15T06:00:00Z",
           }),
           headers: new Headers(),
           blob: {},
@@ -175,7 +181,7 @@ describe("GET /api/surveys/[formId]", () => {
           stream: streamOf({
             "How_satisfied": "Very",
             respondentEmail: "post-fix@user.com",
-            _receivedAt: "2026-10-02T00:00:00Z",
+            _receivedAt: "2026-10-15T12:00:00Z",
           }),
           headers: new Headers(),
           blob: {},
@@ -188,6 +194,45 @@ describe("GET /api/surveys/[formId]", () => {
     expect(body.responses[0].respondentEmail).toBe("post-fix@user.com");
   });
 
+  it("filters out responses submitted before today (UTC)", async () => {
+    mockList.mockResolvedValue({
+      blobs: [
+        { pathname: "surveys/f/1.json", url: "https://blob/1.json" },
+        { pathname: "surveys/f/2.json", url: "https://blob/2.json" },
+      ],
+    });
+    mockGet
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          statusCode: 200,
+          stream: streamOf({
+            "How_satisfied": "ok",
+            respondentEmail: "yesterday@user.com",
+            _receivedAt: "2026-10-14T23:59:00Z", // one minute before today's UTC midnight
+          }),
+          headers: new Headers(),
+          blob: {},
+        })
+      )
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          statusCode: 200,
+          stream: streamOf({
+            "How_satisfied": "great",
+            respondentEmail: "today@user.com",
+            _receivedAt: "2026-10-15T00:00:00Z", // exactly today's UTC midnight
+          }),
+          headers: new Headers(),
+          blob: {},
+        })
+      );
+
+    const res = await GET(fakeReq(), { params: { formId: "f" } });
+    const body = await res.json();
+    expect(body.total).toBe(1);
+    expect(body.responses[0].respondentEmail).toBe("today@user.com");
+  });
+
   it("?raw=1 returns filtered-out sample responses too (diagnostic)", async () => {
     mockList.mockResolvedValue({
       blobs: [{ pathname: "surveys/f/1.json", url: "https://blob/1.json" }],
@@ -196,7 +241,7 @@ describe("GET /api/surveys/[formId]", () => {
       statusCode: 200,
       stream: streamOf({
         "04c09205": "sample text question answer",
-        _receivedAt: "2026-10-01T00:00:00Z",
+        _receivedAt: "2026-10-15T06:00:00Z",
       }),
       headers: new Headers(),
       blob: {},
