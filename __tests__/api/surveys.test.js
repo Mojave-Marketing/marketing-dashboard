@@ -96,6 +96,58 @@ describe("GET /api/surveys/[formId]", () => {
     }
   });
 
+  it("filters out Google Forms test responses containing 'sample text question answer'", async () => {
+    mockList.mockResolvedValue({
+      blobs: [
+        { pathname: "surveys/f/1.json", url: "https://blob/1.json" },
+        { pathname: "surveys/f/2.json", url: "https://blob/2.json" },
+        { pathname: "surveys/f/3.json", url: "https://blob/3.json" },
+      ],
+    });
+    mockGet
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          statusCode: 200,
+          stream: streamOf({
+            answer1: "sample text question answer",
+            answer2: "sample text question answer",
+            respondentEmail: "test@google.com",
+            _receivedAt: "2026-10-01T00:00:00Z",
+          }),
+          headers: new Headers(),
+          blob: {},
+        })
+      )
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          statusCode: 200,
+          stream: streamOf({
+            answer1: "Great training, really enjoyed it",
+            respondentEmail: "real@user.com",
+            _receivedAt: "2026-10-02T00:00:00Z",
+          }),
+          headers: new Headers(),
+          blob: {},
+        })
+      )
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          statusCode: 200,
+          stream: streamOf({
+            answer1: "SAMPLE TEXT QUESTION ANSWER", // case-insensitive match
+            _receivedAt: "2026-10-03T00:00:00Z",
+          }),
+          headers: new Headers(),
+          blob: {},
+        })
+      );
+
+    const res = await GET(fakeReq(), { params: { formId: "f" } });
+    const body = await res.json();
+    expect(body.total).toBe(1);
+    expect(body.responses[0].respondentEmail).toBe("real@user.com");
+  });
+
   it("returns 500 when the blob list call throws", async () => {
     const originalError = console.error;
     console.error = jest.fn();

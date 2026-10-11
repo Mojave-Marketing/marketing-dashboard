@@ -24,6 +24,7 @@ export async function GET(request, { params }) {
 
     const valid = responses
       .filter(Boolean)
+      .filter(isNotGoogleFormsSample)
       .sort((a, b) => new Date(b._receivedAt) - new Date(a._receivedAt));
 
     return NextResponse.json({ responses: valid, total: valid.length });
@@ -34,4 +35,15 @@ export async function GET(request, { params }) {
       { status: 500 }
     );
   }
+}
+
+// Google Forms' quiz template fills every answer with "sample text question
+// answer" when you test-view a form. Drop any response where any field holds
+// that exact placeholder string.
+const SAMPLE_VALUE = "sample text question answer";
+function isNotGoogleFormsSample(response) {
+  if (!response || typeof response !== "object") return true;
+  return !Object.values(response).some(
+    (v) => typeof v === "string" && v.trim().toLowerCase() === SAMPLE_VALUE
+  );
 }

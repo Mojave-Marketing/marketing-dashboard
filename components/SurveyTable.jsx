@@ -3,6 +3,13 @@
 import { useEffect, useState } from "react";
 
 function detectName(row) {
+  // Prefer an email field when present — these are typically more reliable
+  // identifiers than name fields that may be optional on the form.
+  const emailKey = Object.keys(row).find(
+    (k) => !k.startsWith("_") && k.toLowerCase().includes("email")
+  );
+  if (emailKey && row[emailKey]) return row[emailKey];
+
   const nameKey = Object.keys(row).find(
     (k) => !k.startsWith("_") && k.toLowerCase().includes("name")
   );

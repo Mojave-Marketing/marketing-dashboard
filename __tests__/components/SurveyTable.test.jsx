@@ -77,6 +77,24 @@ describe("SurveyTable", () => {
     await waitFor(() => expect(screen.getByText("Anonymous")).toBeInTheDocument());
   });
 
+  it("prefers an email field over a name field as the respondent identifier", async () => {
+    mockApi({
+      responses: [
+        {
+          Name: "Ana",
+          respondentEmail: "ana@example.com",
+          Rating: "9",
+          _receivedAt: "2026-09-01T00:00:00Z",
+        },
+      ],
+      total: 1,
+    });
+    render(<SurveyTable formId="f" />);
+    await waitFor(() => expect(screen.getByText("ana@example.com")).toBeInTheDocument());
+    // The name field is still visible as expanded content, but NOT as the row header.
+    expect(screen.queryByRole("cell", { name: "Ana" })).not.toBeInTheDocument();
+  });
+
   it("expands a row to show all detail fields when clicked", async () => {
     const user = userEvent.setup();
     mockApi({
