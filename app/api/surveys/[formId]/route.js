@@ -57,11 +57,12 @@ const SAMPLE_VALUE = "sample text question answer";
 const UUID_KEY_RE = /^[0-9a-f]{8}$/i;
 
 // Recursively check whether the sample placeholder appears anywhere in a
-// response, including inside nested objects (the Zap for Rep Company Feedback
-// nests all Q&A pairs under a `questions` object).
+// response — including as a substring, since some Zaps serialize nested
+// Q&A pairs into a stringified-dict blob (e.g. the Rep Company Feedback
+// webhook sends `questions: "{'issueDetails': 'sample text question answer', ...}"`).
 function hasSampleTextAnywhere(value) {
   if (typeof value === "string") {
-    return value.trim().toLowerCase() === SAMPLE_VALUE;
+    return value.toLowerCase().includes(SAMPLE_VALUE);
   }
   if (Array.isArray(value)) return value.some(hasSampleTextAnywhere);
   if (value && typeof value === "object") {

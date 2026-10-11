@@ -109,6 +109,7 @@ describe("GET /api/surveys/[formId]", () => {
         { pathname: "surveys/f/2.json", url: "https://blob/2.json" },
         { pathname: "surveys/f/3.json", url: "https://blob/3.json" },
         { pathname: "surveys/f/4.json", url: "https://blob/4.json" },
+        { pathname: "surveys/f/5.json", url: "https://blob/5.json" },
       ],
     });
     mockGet
@@ -161,6 +162,21 @@ describe("GET /api/surveys/[formId]", () => {
             },
             Respondent: "nested@user.com",
             _receivedAt: "2026-10-15T20:00:00Z",
+          }),
+          headers: new Headers(),
+          blob: {},
+        })
+      )
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          statusCode: 200,
+          stream: streamOf({
+            // Stringified-dict shape — same Zap can serialize the questions
+            // object into a Python-dict-looking string instead of a true
+            // JSON object. Substring match catches this.
+            questions: "{'rsmName': 'Jane', 'issueDetails': 'sample text question answer'}",
+            Respondent: "stringdict@user.com",
+            _receivedAt: "2026-10-15T22:00:00Z",
           }),
           headers: new Headers(),
           blob: {},
