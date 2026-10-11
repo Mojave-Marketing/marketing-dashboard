@@ -56,11 +56,23 @@ export async function GET(request, { params }) {
 const SAMPLE_VALUE = "sample text question answer";
 const UUID_KEY_RE = /^[0-9a-f]{8}$/i;
 
+// Recursively check whether the sample placeholder appears anywhere in a
+// response, including inside nested objects (the Zap for Rep Company Feedback
+// nests all Q&A pairs under a `questions` object).
+function hasSampleTextAnywhere(value) {
+  if (typeof value === "string") {
+    return value.trim().toLowerCase() === SAMPLE_VALUE;
+  }
+  if (Array.isArray(value)) return value.some(hasSampleTextAnywhere);
+  if (value && typeof value === "object") {
+    return Object.values(value).some(hasSampleTextAnywhere);
+  }
+  return false;
+}
+
 function isNotGoogleFormsSample(response) {
   if (!response || typeof response !== "object") return true;
-  return !Object.values(response).some(
-    (v) => typeof v === "string" && v.trim().toLowerCase() === SAMPLE_VALUE
-  );
+  return !hasSampleTextAnywhere(response);
 }
 
 function hasRealQuestionKeys(response) {

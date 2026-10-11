@@ -108,6 +108,7 @@ describe("GET /api/surveys/[formId]", () => {
         { pathname: "surveys/f/1.json", url: "https://blob/1.json" },
         { pathname: "surveys/f/2.json", url: "https://blob/2.json" },
         { pathname: "surveys/f/3.json", url: "https://blob/3.json" },
+        { pathname: "surveys/f/4.json", url: "https://blob/4.json" },
       ],
     });
     mockGet
@@ -142,6 +143,24 @@ describe("GET /api/surveys/[formId]", () => {
           stream: streamOf({
             answer1: "SAMPLE TEXT QUESTION ANSWER", // case-insensitive match
             _receivedAt: "2026-10-15T18:00:00Z",
+          }),
+          headers: new Headers(),
+          blob: {},
+        })
+      )
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          statusCode: 200,
+          stream: streamOf({
+            // Nested-object shape — the Zap for Rep Company Feedback puts
+            // all Q&A pairs under a `questions` key. Sample text can hide
+            // multiple levels down.
+            questions: {
+              rsmName: "Brian Schmidt",
+              issueDetails: "sample text question answer",
+            },
+            Respondent: "nested@user.com",
+            _receivedAt: "2026-10-15T20:00:00Z",
           }),
           headers: new Headers(),
           blob: {},
