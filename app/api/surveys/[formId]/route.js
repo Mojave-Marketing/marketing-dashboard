@@ -30,7 +30,9 @@ export async function GET(request, { params }) {
     const base = responses
       .filter(Boolean)
       .sort((a, b) => new Date(b._receivedAt) - new Date(a._receivedAt));
-    const valid = raw ? base : base.filter(isNotGoogleFormsSample);
+    const valid = raw
+      ? base
+      : base.filter(isNotGoogleFormsSample).filter(hasRealQuestionKeys);
 
     return NextResponse.json({ responses: valid, total: valid.length, ...(raw ? { raw: true } : {}) });
   } catch (err) {
@@ -42,13 +44,23 @@ export async function GET(request, { params }) {
   }
 }
 
-// Google Forms' quiz template fills every answer with "sample text question
-// answer" when you test-view a form. Drop any response where any field holds
-// that exact placeholder string.
+// Filter out responses that aren't usable in the dashboard:
+//   1. Google Forms test submissions with the "sample text question answer"
+//      placeholder (what Google writes when you preview/test a form).
+//   2. Pre-Zap-fix responses whose field keys are raw Google Forms question
+//      IDs (8-char hex strings like "04c09205") instead of human-readable
+//      question text — those render as unreadable rows.
 const SAMPLE_VALUE = "sample text question answer";
+const UUID_KEY_RE = /^[0-9a-f]{8}$/i;
+
 function isNotGoogleFormsSample(response) {
   if (!response || typeof response !== "object") return true;
   return !Object.values(response).some(
     (v) => typeof v === "string" && v.trim().toLowerCase() === SAMPLE_VALUE
   );
+}
+
+function hasRealQuestionKeys(response) {
+  if (!response || typeof response !== "object") return true;
+  return !Object.keys(response).some((k) => UUID_KEY_RE.test(k));
 }

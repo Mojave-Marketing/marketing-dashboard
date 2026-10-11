@@ -120,9 +120,9 @@ export default function SurveyTable({ formId }) {
   if (responses.length === 0) {
     return (
       <div className="survey-empty">
-        <p className="survey-empty-title">No responses yet</p>
+        <p className="survey-empty-title">No form submissions yet</p>
         <p className="survey-empty-sub">
-          Responses will appear here as they come in through Zapier.
+          Submissions will appear here as they come in through Zapier.
         </p>
       </div>
     );

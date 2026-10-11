@@ -148,6 +148,46 @@ describe("GET /api/surveys/[formId]", () => {
     expect(body.responses[0].respondentEmail).toBe("real@user.com");
   });
 
+  it("filters out responses whose field keys are raw Google Forms question UUIDs", async () => {
+    mockList.mockResolvedValue({
+      blobs: [
+        { pathname: "surveys/f/1.json", url: "https://blob/1.json" },
+        { pathname: "surveys/f/2.json", url: "https://blob/2.json" },
+      ],
+    });
+    mockGet
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          statusCode: 200,
+          stream: streamOf({
+            "04c09205": "Yes",
+            "4a0b34cc": "Great training",
+            respondentEmail: "pre-fix@user.com",
+            _receivedAt: "2026-10-01T00:00:00Z",
+          }),
+          headers: new Headers(),
+          blob: {},
+        })
+      )
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          statusCode: 200,
+          stream: streamOf({
+            "How_satisfied": "Very",
+            respondentEmail: "post-fix@user.com",
+            _receivedAt: "2026-10-02T00:00:00Z",
+          }),
+          headers: new Headers(),
+          blob: {},
+        })
+      );
+
+    const res = await GET(fakeReq(), { params: { formId: "f" } });
+    const body = await res.json();
+    expect(body.total).toBe(1);
+    expect(body.responses[0].respondentEmail).toBe("post-fix@user.com");
+  });
+
   it("?raw=1 returns filtered-out sample responses too (diagnostic)", async () => {
     mockList.mockResolvedValue({
       blobs: [{ pathname: "surveys/f/1.json", url: "https://blob/1.json" }],

@@ -44,7 +44,7 @@ describe("SurveyTable", () => {
   it("renders the empty state when there are no responses", async () => {
     mockApi({ responses: [], total: 0 });
     render(<SurveyTable formId="f" />);
-    await waitFor(() => expect(screen.getByText(/No responses yet/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/No form submissions yet/)).toBeInTheDocument());
   });
 
   it("renders responses with detected name and primary rating", async () => {
