@@ -49,7 +49,7 @@ Marketing Emails
 Website Analytics            [Soon badge]
   └── Overview              (/analytics/website)
 
-LinkedIn Analytics           [Soon badge in sidebar — the data path is live via Buffer]
+LinkedIn Analytics
   └── Overview              (/analytics/linkedin)
 
 Survey Responses

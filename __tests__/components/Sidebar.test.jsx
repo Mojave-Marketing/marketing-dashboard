@@ -71,10 +71,10 @@ describe("Sidebar", () => {
     expect(activeItems[0]).toHaveTextContent("Trends & Baseline");
   });
 
-  it("shows Soon badge on Website and LinkedIn sections", () => {
+  it("shows Soon badge on Website Analytics (LinkedIn is live via Buffer)", () => {
     usePathname.mockReturnValue("/");
     render(<Sidebar forms={FORMS} />);
-    expect(screen.getAllByText("Soon")).toHaveLength(2);
+    expect(screen.getAllByText("Soon")).toHaveLength(1);
   });
 
   it("collapses when the toggle is clicked", async () => {

@@ -28,7 +28,6 @@ function buildNav(forms) {
     {
       id: "linkedin",
       title: "LinkedIn Analytics",
-      comingSoon: true,
       items: [{ label: "Overview", href: "/analytics/linkedin" }],
     },
     {
